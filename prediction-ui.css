@@ -31,8 +31,8 @@ body.dark .reset-countdown-block .reset-item::after{color:rgba(237,178,198,.17)}
 .rn-prediction-values{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:26px;font-variant-numeric:tabular-nums}
 .rn-window{display:grid;grid-template-columns:auto 1fr;align-items:baseline;column-gap:9px;row-gap:10px;min-width:0}
 .rn-window-label{font:500 11px/1.3 Inter,system-ui,sans-serif;letter-spacing:.5px;color:var(--secondary-text);opacity:.75}
-.rn-window strong{font:650 32px/1.15 Inter,system-ui,sans-serif;letter-spacing:-1.4px;background:linear-gradient(180deg,#a75074 12%,rgba(167,80,116,.18) 100%);background-clip:text;-webkit-background-clip:text;color:transparent}
-body.dark .rn-window strong{background-image:linear-gradient(180deg,#efb0c4 12%,rgba(239,176,196,.16) 100%)}
+.rn-window strong,.rf-metric:not(.rf-last) .rf-value{font:650 32px/1.15 Inter,system-ui,sans-serif;letter-spacing:-1.4px;background:linear-gradient(180deg,#a75074 12%,rgba(167,80,116,.18) 100%);background-clip:text;-webkit-background-clip:text;color:transparent}
+body.dark .rn-window strong,body.dark .rf-metric:not(.rf-last) .rf-value{background-image:linear-gradient(180deg,#efb0c4 12%,rgba(239,176,196,.16) 100%)}
 .rn-window-separator{display:none}
 @media(forced-colors:active){.rn-window strong{background:none;color:CanvasText}}
 

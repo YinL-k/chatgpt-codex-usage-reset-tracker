@@ -5,6 +5,20 @@
   let frameReady = false, connected = false;
   let windowId = null, disposed = false, reconnectTimer = 0, heartbeat = 0, helpTimer = 0, toastTimer = 0, transitionTimer = 0, previewFadeTimer = 0, revealFallbackTimer = 0, lastChatURL = 'https://chatgpt.com/';
   let chatVisible = false, pendingChatReveal = false, ambientHandoffAnimations = [];
+  // Sample once per panel opening; normal renders must never move the lights.
+  function initializeAmbient() {
+    const widths = [67, 56, 49];
+    const firstLeft = Math.random() < .5;
+    document.querySelectorAll('.sm-ambient-flow .sm-ambient-blob').forEach((el, i) => {
+      const left = -12 + Math.random() * 60;
+      const top = -5 + i * 32 + Math.random() * 12;
+      // Keep the luminous center outside the viewport; only its soft falloff
+      // enters the chat, blending with the edge instead of forming a spot.
+      const target = (i % 2 === 0) === firstLeft ? -widths[i] * .68 : 100 - widths[i] * .32;
+      Object.assign(el.style, { left: left + '%', right: 'auto', top: top + '%', bottom: 'auto', animationDelay: (-Math.random() * 10) + 's' });
+      el.style.setProperty('--sm-rest-transform', `translate3d(${target - left}vw,0,0)`);
+    });
+  }
   const t = key => SakuraSideStrings[lang]?.[key] || SakuraSideStrings.en[key] || key;
   function post(m) { try { lifecycle?.postMessage(m); } catch { connect(); } }
   function tellFrame() {
@@ -105,6 +119,7 @@
       el.style.removeProperty('opacity');
       el.style.removeProperty('animation');
       el.style.removeProperty('will-change');
+      el.style.removeProperty('filter');
     }
     for (const el of [flowLayer, restLayer]) {
       if (!el) continue;
@@ -121,8 +136,7 @@
     if (!restLayer || !flow.length) return;
 
     // Freeze the moving preview field at the exact frame the user clicked.
-    // From there the live lights physically retreat out of the viewport while
-    // the single static approved edge surface fades in underneath them.
+    // Move those same lights to the edges; retain their sampled vertical positions.
     const frozen = flow.map(el => {
       const cs = getComputedStyle(el);
       return {
@@ -135,28 +149,24 @@
       item.el.style.setProperty('animation', 'none', 'important');
       item.el.style.transform = item.transform;
       item.el.style.opacity = String(item.opacity);
-      item.el.style.willChange = 'transform, opacity';
+      item.el.style.willChange = 'transform, opacity, filter';
     }
     restLayer.style.willChange = 'opacity, transform';
 
-    const exits = [
-      'translate3d(-175px,-42px,0) rotate(-2deg) scale(.66)',
-      'translate3d(165px,35px,0) rotate(2deg) scale(.64)',
-      'translate3d(-135px,92px,0) rotate(-1.5deg) scale(.69)'
-    ];
-    const flowOptions = { duration: 1280, easing: 'cubic-bezier(.22,.72,.18,1)', fill: 'forwards' };
-    frozen.forEach((item, i) => {
+    const flowOptions = { duration: 1800, easing: 'cubic-bezier(.22,.72,.18,1)', fill: 'forwards' };
+    frozen.forEach(item => {
       ambientHandoffAnimations.push(item.el.animate([
-        { transform: item.transform, opacity: item.opacity },
-        { offset: .58, transform: item.transform, opacity: item.opacity * .82 },
-        { transform: exits[i] || exits.at(-1), opacity: 0 }
+        { transform: item.transform, opacity: item.opacity, filter: 'blur(28px)' },
+        { offset: .48, transform: item.el.style.getPropertyValue('--sm-rest-transform'), opacity: .72, filter: 'blur(28px)' },
+        { offset: .75, transform: item.el.style.getPropertyValue('--sm-rest-transform') + ' scale(.65,1.7)', opacity: .36, filter: 'blur(40px)' },
+        { transform: item.el.style.getPropertyValue('--sm-rest-transform') + ' scale(.45,2.6)', opacity: 0, filter: 'blur(52px)' }
       ], flowOptions));
     });
     ambientHandoffAnimations.push(restLayer.animate([
       { opacity: 0, transform: 'translateZ(0) scale(.992)' },
-      { offset: .30, opacity: 0, transform: 'translateZ(0) scale(.992)' },
+      { offset: .35, opacity: 0, transform: 'translateZ(0) scale(.992)' },
       { opacity: 1, transform: 'translateZ(0) scale(1)' }
-    ], { duration: 1280, easing: 'cubic-bezier(.22,.72,.18,1)', fill: 'forwards' }));
+    ], { duration: 1800, easing: 'cubic-bezier(.22,.72,.18,1)', fill: 'forwards' }));
   }
   function showPreview() {
     clearTimeout(transitionTimer); transitionTimer = 0;
@@ -207,7 +217,7 @@
         // Stage=chat establishes the exact static approved footprint before the
         // temporary WAAPI layers are discarded.
         cancelAmbientHandoff();
-      }, 1320);
+      }, 1840);
     }));
   }
   function syncChatSurface(url=lastChatURL){
@@ -329,6 +339,7 @@
     if (area === 'sync' && changes.gptTrackerLang) { lang = changes.gptTrackerLang.newValue === 'zh' ? 'zh' : 'en'; applyLanguage(); }
   });
   window.addEventListener('pagehide', () => { disposed = true; clearTimeout(reconnectTimer); clearTimeout(transitionTimer); clearTimeout(previewFadeTimer); clearTimeout(revealFallbackTimer); clearInterval(heartbeat); disposeBridge(); lifecycle?.disconnect(); });
+  initializeAmbient();
   syncChatSurface();
   void (async () => {
     const prefs = await chrome.storage.sync.get('gptTrackerLang');

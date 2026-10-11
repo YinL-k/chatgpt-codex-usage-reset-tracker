@@ -51,23 +51,7 @@ body{
   background:var(--bg);
 }
 body::after{
-  content:"";
-  position:fixed;
-  inset:0;
-  z-index:2147483646;
-  pointer-events:none;
-  box-shadow:
-    inset 0 0 18px rgba(239,145,185,.16),
-    inset 0 0 42px rgba(201,105,151,.075),
-    inset 0 18px 38px rgba(239,179,199,.035),
-    inset 0 -18px 42px rgba(183,91,140,.045);
-}
-:root[data-theme=light] body::after{
-  box-shadow:
-    inset 0 0 16px rgba(193,86,132,.11),
-    inset 0 0 38px rgba(222,134,169,.06),
-    inset 0 16px 34px rgba(255,190,214,.045),
-    inset 0 -16px 38px rgba(184,87,128,.035);
+  content:none;
 }
 .shell{
   padding:0!important;
@@ -173,13 +157,6 @@ body{
     radial-gradient(56% 44% at -10% 100%,rgba(190,112,151,.045),transparent 80%),
     #faf6f8!important;
 }
-body::after{
-  box-shadow:
-    inset 0 0 16px var(--sm-glow-edge),
-    inset 0 0 46px var(--sm-glow-soft),
-    inset 0 18px 46px rgba(245,184,207,.025),
-    inset 0 -20px 48px rgba(180,82,135,.035)!important;
-}
 .popover,
 dialog{
   border:1px solid var(--sm-glass-line)!important;
@@ -243,6 +220,8 @@ body:has(#chat-frame) .welcome-art .halo{
 .sm-ambient-blob{
   position:absolute;display:block;pointer-events:none;transform-origin:center;
   backface-visibility:hidden;transform:translate3d(0,0,0);
+  /* Feather the entire painted box so its rectangular bounds never show. */
+  filter:blur(28px);
 }
 
 /* Preview flow: visibly travels across the panel, but never flashes. */
@@ -278,31 +257,14 @@ body:has(#chat-frame) .welcome-art .halo{
   100%{transform:translate3d(58px,-27px,0) rotate(1.1deg) scale(1.005)}
 }
 
-/* Final chat rest = approved narrow edge footprint, one static surface, no blobs. */
+/* The edge glow receives the spreading lights; no separate spots remain. */
 .sm-ambient-rest{
   opacity:0;transform:translateZ(0) scale(.992);
-  background:
-    radial-gradient(75% 42% at 50% -8%,rgba(239,153,191,.075),transparent 72%),
-    radial-gradient(62% 54% at 106% 54%,rgba(208,105,155,.055),transparent 77%),
-    radial-gradient(56% 44% at -10% 100%,rgba(168,93,143,.04),transparent 80%);
-  box-shadow:
-    inset 0 0 16px rgba(239,146,185,.17),
-    inset 0 0 46px rgba(229,119,168,.09),
-    inset 0 18px 46px rgba(245,184,207,.025),
-    inset 0 -20px 48px rgba(180,82,135,.035);
+  background:none;
+  box-shadow:inset 0 0 16px var(--sm-glow-edge),inset 0 0 46px var(--sm-glow-soft),
+    inset 0 18px 46px rgba(245,184,207,.025),inset 0 -20px 48px rgba(180,82,135,.035);
 }
 .sm-ambient-rest .sm-ambient-blob{display:none!important}
-:root[data-theme=light] .sm-ambient-rest{
-  background:
-    radial-gradient(75% 42% at 50% -8%,rgba(205,105,150,.075),transparent 72%),
-    radial-gradient(62% 54% at 106% 54%,rgba(232,153,185,.07),transparent 77%),
-    radial-gradient(56% 44% at -10% 100%,rgba(190,112,151,.045),transparent 80%);
-  box-shadow:
-    inset 0 0 16px rgba(199,92,138,.11),
-    inset 0 0 46px rgba(189,78,128,.055),
-    inset 0 18px 46px rgba(220,132,166,.022),
-    inset 0 -20px 48px rgba(171,78,125,.028);
-}
 :root[data-theme=light] .sm-flow-a{background:radial-gradient(ellipse at 53% 52%,rgba(205,88,140,.13) 0%,rgba(191,74,128,.064) 34%,rgba(177,65,120,.022) 56%,transparent 73%)}
 :root[data-theme=light] .sm-flow-b{background:radial-gradient(ellipse at 44% 49%,rgba(193,103,153,.095) 0%,rgba(178,88,142,.042) 38%,rgba(164,77,134,.015) 58%,transparent 74%)}
 :root[data-theme=light] .sm-flow-c{background:radial-gradient(ellipse at 56% 45%,rgba(209,116,160,.062) 0%,rgba(188,89,143,.028) 40%,rgba(171,76,134,.010) 60%,transparent 76%)}
@@ -311,7 +273,8 @@ body[data-side-stage="preview"] .sm-ambient-flow{opacity:1;visibility:visible}
 body[data-side-stage="preview"] .sm-ambient-rest{opacity:0;visibility:hidden}
 body[data-side-stage="transition"] .sm-ambient-flow{opacity:1;visibility:visible}
 body[data-side-stage="transition"] .sm-ambient-rest{visibility:visible}
-body[data-side-stage="chat"] .sm-ambient-flow{opacity:0;visibility:hidden}
+body[data-side-stage="chat"] .sm-ambient-flow{opacity:1;visibility:visible}
+body[data-side-stage="chat"] .sm-ambient-flow .sm-ambient-blob{animation:none!important;transform:var(--sm-rest-transform) scale(.45,2.6);filter:blur(52px);opacity:0}
 body[data-side-stage="chat"] .sm-ambient-rest{opacity:1;visibility:visible;transform:translateZ(0) scale(1)}
 
 /* Content handoff is intentionally short. ChatGPT is already preloaded behind

@@ -111,12 +111,14 @@ async function run(){
    const scroll=document.createElement('div');scroll.className='thread-scroll-container';scroll.setAttribute('data-app-action-timeline-scroll','');scroll.style.cssText='position:fixed;inset:0;overflow:auto;background:#101010;color:white';scroll.innerHTML='<div style="height:1600px">Scroll fixture</div>';document.body.prepend(scroll);
    const box=document.querySelector('[data-composer-body]');box.setAttribute('data-composer-surface-variant','default');box.style.cssText='position:fixed;bottom:16px;left:16px;right:16px;height:120px;border-radius:28px;background:#222;z-index:2';
   });
-  await frame.waitForFunction(()=>parseFloat(document.querySelector('.thread-scroll-container').style.getPropertyValue('--sm-scrollbar-bottom'))>=144);
-  const beforeInset=await frame.locator('.thread-scroll-container').evaluate(e=>parseFloat(getComputedStyle(e,'::-webkit-scrollbar-track').marginBottom));
-  assert.ok(beforeInset>=144,'scrollbar track ends above the composer');
+  const boundary=()=>frame.waitForFunction(()=>{
+   const rail=document.querySelector('#sakura-chat-scrollbar'),box=document.querySelector('[data-composer-body]');
+   return rail&&!rail.hidden&&rail.getBoundingClientRect().bottom<=box.getBoundingClientRect().top-8;
+  });
+  await boundary();
   await frame.locator('[data-composer-body]').evaluate(e=>e.style.height='180px');
-  await frame.waitForFunction(()=>parseFloat(document.querySelector('.thread-scroll-container').style.getPropertyValue('--sm-scrollbar-bottom'))>=204);
-  assert.equal(await frame.locator('.thread-scroll-container').evaluate(e=>getComputedStyle(e).scrollbarWidth),'auto');
+  await boundary();
+  assert.equal(await frame.locator('.thread-scroll-container').evaluate(e=>getComputedStyle(e).scrollbarWidth),'none');
   await frame.locator('.thread-scroll-container').evaluate(e=>e.scrollTop=e.scrollHeight);
   await p.screenshot({path:path.join(root,'tests/artifacts/sidebar-scrollbar-boundary.png')});
   console.log('PASS: native model payload + current form-less ProseMirror click/Enter + Selection-only sends; Page ON semantics, default dedupe, latest snapshot before send, explicit Selection target with dedupe, Page OFF/restore, dedupe OFF/ON, read failures, repeated clicks and pending draft/close cancellation.');

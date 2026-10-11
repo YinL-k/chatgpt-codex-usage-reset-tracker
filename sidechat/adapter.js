@@ -88,34 +88,79 @@
     // changed z-index, which caused a visible 1-2 frame jump during opening.
     bar.dataset.sidebarOpen=sidebar?'true':'false';
   }
-  let scrollbarSurface=null,scrollbarComposer=null;
+  let scrollbarSurface=null,scrollbarComposer=null,scrollbarRail=null,scrollbarThumb=null;
   const scrollbarObserver=typeof ResizeObserver==='function'?new ResizeObserver(()=>syncScrollbarBoundary()):null;
+  function ensureScrollbarRail(){
+    if(scrollbarRail?.isConnected)return;
+    scrollbarRail=document.createElement('div');scrollbarRail.id='sakura-chat-scrollbar';
+    scrollbarRail.setAttribute('role','scrollbar');scrollbarRail.setAttribute('aria-label','Scroll conversation');
+    scrollbarRail.setAttribute('aria-orientation','vertical');scrollbarRail.setAttribute('aria-valuemin','0');scrollbarRail.tabIndex=0;
+    scrollbarThumb=document.createElement('div');scrollbarRail.append(scrollbarThumb);document.body.append(scrollbarRail);
+    let drag=null;
+    scrollbarRail.addEventListener('pointerdown',e=>{
+      if(e.button!==0||!scrollbarSurface)return;
+      e.preventDefault();scrollbarRail.focus({preventScroll:true});
+      const box=scrollbarThumb.getBoundingClientRect();
+      drag={offset:e.target===scrollbarThumb?e.clientY-box.top:box.height/2};
+      scrollbarRail.setPointerCapture(e.pointerId);seek(e.clientY);
+    });
+    function seek(y){
+      if(!drag||!scrollbarSurface)return;
+      const track=scrollbarRail.getBoundingClientRect(),travel=track.height-scrollbarThumb.getBoundingClientRect().height;
+      if(travel>0)scrollbarSurface.scrollTop=(y-track.top-drag.offset)/travel*(scrollbarSurface.scrollHeight-scrollbarSurface.clientHeight);
+    }
+    scrollbarRail.addEventListener('pointermove',e=>seek(e.clientY));
+    scrollbarRail.addEventListener('lostpointercapture',()=>{drag=null;});
+    scrollbarRail.addEventListener('pointerup',()=>{drag=null;});
+    scrollbarRail.addEventListener('pointercancel',()=>{drag=null;});
+    scrollbarRail.addEventListener('wheel',e=>{
+      if(!scrollbarSurface)return;e.preventDefault();
+      scrollbarSurface.scrollTop+=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?scrollbarSurface.clientHeight:1);
+    },{passive:false});
+    scrollbarRail.addEventListener('keydown',e=>{
+      const s=scrollbarSurface;if(!s)return;
+      const steps={ArrowDown:40,ArrowUp:-40,PageDown:s.clientHeight,PageUp:-s.clientHeight,Home:-s.scrollHeight,End:s.scrollHeight};
+      if(e.key in steps){e.preventDefault();s.scrollTop+=steps[e.key];}
+    });
+  }
   function syncScrollbarBoundary(){
     const surface=document.querySelector('.thread-scroll-container[data-app-action-timeline-scroll]');
     const input=composer()?.closest('[data-composer-surface-variant],form');
     if(surface!==scrollbarSurface||input!==scrollbarComposer){
       scrollbarObserver?.disconnect();
+      scrollbarSurface?.removeEventListener('scroll',syncScrollbarBoundary);
       scrollbarSurface?.removeAttribute('data-sakura-scrollbar');
       scrollbarSurface?.style.removeProperty('--sm-scrollbar-bottom');
       scrollbarSurface=surface;scrollbarComposer=input;
       if(surface)scrollbarObserver?.observe(surface);
+      surface?.addEventListener('scroll',syncScrollbarBoundary,{passive:true});
       if(input)scrollbarObserver?.observe(input);
     }
-    if(!surface)return;
+    if(!surface){if(scrollbarRail)scrollbarRail.hidden=true;return;}
     const bounds=surface.getBoundingClientRect(),box=input?.getBoundingClientRect();
-    const inset=box&&box.height>0?Math.max(0,Math.min(bounds.height-24,bounds.bottom-box.top+8)):0;
+    const top=Math.max(0,bounds.top),bottom=Math.min(innerHeight,bounds.bottom,box&&box.height>0?box.top-8:innerHeight);
+    const height=Math.max(0,bottom-top),max=surface.scrollHeight-surface.clientHeight;
+    ensureScrollbarRail();
+    scrollbarRail.hidden=height<24||max<=1||bounds.width===0;
+    Object.assign(scrollbarRail.style,{top:top+'px',left:Math.min(innerWidth-8,bounds.right-8)+'px',height:height+'px'});
+    const thumbHeight=Math.min(height,Math.max(28,height*surface.clientHeight/surface.scrollHeight));
+    Object.assign(scrollbarThumb.style,{height:thumbHeight+'px',transform:`translateY(${Math.max(0,Math.min(1,surface.scrollTop/Math.max(1,max)))*(height-thumbHeight)}px)`});
+    scrollbarRail.setAttribute('aria-valuemax',String(Math.max(0,max)));
+    scrollbarRail.setAttribute('aria-valuenow',String(Math.round(surface.scrollTop)));
+    if(surface.id)scrollbarRail.setAttribute('aria-controls',surface.id);else scrollbarRail.removeAttribute('aria-controls');
     surface.dataset.sakuraScrollbar='true';
-    surface.style.setProperty('--sm-scrollbar-bottom',Math.ceil(inset)+'px');
   }
   function ensureNativeStyle(){
     let style=document.getElementById(NATIVE_STYLE_ID);
     if(style)return style;
     style=document.createElement('style');style.id=NATIVE_STYLE_ID;
     style.textContent=`
-      [data-sakura-scrollbar="true"]{scrollbar-width:auto!important;scrollbar-color:auto!important}
-      [data-sakura-scrollbar="true"]::-webkit-scrollbar{width:6px}
-      [data-sakura-scrollbar="true"]::-webkit-scrollbar-track{margin-bottom:var(--sm-scrollbar-bottom,0px);background:transparent}
-      [data-sakura-scrollbar="true"]::-webkit-scrollbar-thumb{background:rgba(128,128,128,.42);border-radius:999px}
+      [data-sakura-scrollbar="true"]{scrollbar-width:none!important}
+      [data-sakura-scrollbar="true"]::-webkit-scrollbar{display:none!important}
+      #sakura-chat-scrollbar{position:fixed;width:8px;z-index:19;touch-action:none;cursor:default}
+      #sakura-chat-scrollbar[hidden]{display:none!important}
+      #sakura-chat-scrollbar>div{width:6px;margin-left:1px;background:rgba(128,128,128,.55);border-radius:999px}
+      #sakura-chat-scrollbar:focus-visible{outline:1px solid #c786a1;outline-offset:1px}
       [data-sakura-hide-mode-switch="true"]{display:none!important}
       html[data-sakura-sidechat-theme="dark"]{
         --main-surface-primary:#08080b!important;--main-surface-secondary:#0d0c10!important;
