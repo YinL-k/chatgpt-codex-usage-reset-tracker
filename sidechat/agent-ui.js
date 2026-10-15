@@ -44,7 +44,13 @@
     void (chrome.storage.local?.get('__sakuraAgentPrefsV1')||Promise.resolve({})).then(d=>{const p=d.__sakuraAgentPrefsV1;if(p){loop.format=p.format==='xml'?'xml':'json';loop.maxSteps=Math.max(1,Math.min(50,p.maxSteps||20));}render();});
     window.addEventListener('pagehide',()=>{void loop.stop();port?.disconnect();});
     return {render,language:value=>{lang=value==='zh'?'zh':'en';render();},sync:()=>h.send({type:'SC_AGENT_MODE',enabled:loop.mode}),stop:()=>loop.stop(),
-      receive:m=>{if(m.type==='SC_AGENT_SET_MODE'){void changeMode(m.enabled===true);return true;}if(m.type==='SC_AGENT_TASK'){if(!loop.run)$('agent-answer').hidden=true;void loop.task(m.task);return true;}if(m.type==='SC_AGENT_RESPONSE'){void loop.response(m);return true;}if(m.type==='SC_AGENT_TRANSPORT_ERROR'){loop.error(m);return true;}return false;}};
+      receive:m=>{if(m.type==='SC_AGENT_LAYOUT'){
+        if(Number.isFinite(m.composerTop)&&Number.isFinite(m.viewportHeight)&&m.viewportHeight>0){
+          const frame=$('chat-frame').getBoundingClientRect(),top=frame.top+frame.height*Math.max(0,Math.min(1,m.composerTop/m.viewportHeight));
+          $('sakura-agent-bar').style.setProperty('--agent-bottom',Math.max(12,innerHeight-top+8)+'px');
+          $('sakura-agent-bar').style.setProperty('--agent-room',Math.max(40,top-68)+'px');
+        }return true;
+      }if(m.type==='SC_AGENT_SET_MODE'){void changeMode(m.enabled===true);return true;}if(m.type==='SC_AGENT_TASK'){if(!loop.run)$('agent-answer').hidden=true;void loop.task(m.task);return true;}if(m.type==='SC_AGENT_RESPONSE'){void loop.response(m);return true;}if(m.type==='SC_AGENT_TRANSPORT_ERROR'){loop.error(m);return true;}return false;}};
   }
   globalThis.SakuraAgentUI={create};
 })();

@@ -72,6 +72,16 @@ async function run(){
    await frame.locator('textarea').fill('搜索 Sakura 并整理结果');if(format==='xml')await frame.locator('textarea').press('Enter');else await frame.locator('[data-testid=send-button]').click();
    try{await p.waitForFunction(()=>!document.querySelector('#agent-answer').hidden,{},{timeout:20000});}catch(e){console.log('DIAGNOSTIC',await p.locator('#sakura-agent-bar').innerText(),await frame.evaluate(()=>({submits:submits.length,draft:document.querySelector('textarea').value.slice(0,300),messages:document.querySelector('#messages').innerText.slice(-800)})),errors);throw e;}
    assert.equal(await target.evaluate(()=>clicks),1);assert.equal(calls,2);assert.match(await p.locator('#agent-answer').textContent(),/Sakura/);
+   const floatFits=async()=>{
+    const input=await frame.locator('form').boundingBox(),bar=await p.locator('#sakura-agent-bar').boundingBox(),chat=await p.locator('#chat-frame').boundingBox();
+    return !!input&&!!bar&&!!chat&&bar.y+bar.height<=input.y-6&&chat.y<12&&bar.x>=0&&bar.x+bar.width<=p.viewportSize().width;
+   };
+   await p.waitForFunction(()=>document.querySelector('#sakura-agent-bar').style.getPropertyValue('--agent-bottom'));
+   assert(await floatFits(),'Agent status floats above composer without pushing chat down');
+   await frame.locator('textarea').evaluate(el=>el.style.height='130px');await frame.waitForTimeout(650);assert(await floatFits(),'floating status follows a taller composer');
+   await frame.locator('textarea').evaluate(el=>el.style.height='50px');await frame.waitForTimeout(650);
+   await p.screenshot({path:path.join(out,'agent-'+format+'-floating-status.png')});
+   await p.setViewportSize({width:320,height:640});await frame.waitForTimeout(650);assert(await floatFits(),'floating status fits narrow sidebar');await p.screenshot({path:path.join(out,'agent-'+format+'-floating-status-narrow.png')});await p.setViewportSize({width:420,height:820});
    const messages=await frame.evaluate(()=>submits);assert.equal(messages.length,3);assert(messages.every(s=>s.includes('SakuraMeter Agent mode')));assert(messages.every(s=>!s.includes('<PageContext>')));
    assert(await frame.locator('#sakura-agent-activity').isVisible());
    assert(await frame.locator('#sakura-agent-activity').evaluate(el=>el.previousElementSibling.id==='sakura-agent-mode'));

@@ -123,8 +123,17 @@ html[data-sakura-sidechat-theme="light"] .sakura-agent-popover{background:linear
       pending=p;claimedDraft='';
       try{write(el,m.text);}catch{cancel();h.post({type:'SC_AGENT_TRANSPORT_ERROR',request_id:m.request_id,error:'editor_rejected'});}
     }
+    let layoutLast='';
+    function layout(){
+      const el=h.composer(),surface=el?.closest('[data-composer-surface-variant],form,[data-composer-body]')||el;
+      const box=surface?.getBoundingClientRect();
+      if(!box||box.height<=0)return;
+      const composerTop=Math.round(Math.max(0,Math.min(innerHeight,box.top))),key=composerTop+':'+innerHeight;
+      if(key===layoutLast)return;layoutLast=key;
+      h.post({type:'SC_AGENT_LAYOUT',composerTop,viewportHeight:innerHeight});
+    }
     function tick() {
-      renderMode();
+      renderMode();layout();
       const p=pending;if(!p)return;
       const now=Date.now();
       const path=routePath(),currentUsers=users();

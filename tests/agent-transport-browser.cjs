@@ -66,7 +66,7 @@ async function run(){
    rich.tick();rich.tick();
   });
   assert.equal(await p.evaluate(()=>richSends),1,'Paragraph normalization must not cancel Agent sending');
-  assert.deepEqual(await p.evaluate(()=>richEvents),[]);
+  assert.deepEqual(await p.evaluate(()=>richEvents.filter(m=>m.type!=='SC_AGENT_LAYOUT')),[]);
   await p.evaluate(()=>{rich.cancel();rich.receive({type:'SC_AGENT_SEND',request_id:'rich2',text:'First\nSecond'});});
   await p.locator('#rich').press('End');await p.locator('#rich').press('Space');
   const edited=await p.locator('#rich').innerText();await p.evaluate(()=>rich.tick());
@@ -89,7 +89,7 @@ async function run(){
   },prompt);
   await p.evaluate(()=>links.tick());
   assert.equal(await p.evaluate(()=>linkSends),1,'URL data must survive editor reconciliation and send once');
-  assert.deepEqual(await p.evaluate(()=>linkEvents),[]);
+  assert.deepEqual(await p.evaluate(()=>linkEvents.filter(m=>m.type!=='SC_AGENT_LAYOUT')),[]);
   // Prove that this fixture actually reproduces the unfixed URL-token failure.
   await p.evaluate(text=>{links.cancel();links.receive({type:'SC_AGENT_SEND',request_id:'old-links',run_id:'run',text});},prompt.replace(/\\\//g,'/'));
   await p.evaluate(()=>links.tick());

@@ -150,3 +150,10 @@ Release checks: 96 core/Agent Node tests, 45 store-publishing tests and 3 Python
 - Browser regression now loads agent-transport.js alongside the ordinary Chat adapter, and sends activity, idle cancel and Chat-mode synchronization messages during capture and native delivery. The former code times out on the first send; the corrected code passes existing click, Enter, Page/Selection, deduplication and draft-preservation checks.
 - Real signed-in Chrome: click sent the existing greeting and received a normal reply; Enter sent a second task and received CHAT_ENTER_OK. Switching Agent then Chat and sending was also checked.
 - 96 Node tests and the JSON/XML Agent and transport browser regressions passed.
+
+
+## 3.7.0.10 floating Agent status — 2026-10-15
+
+- Status is fixed above the native composer without reducing the iframe height. Geometry is reported through the existing authenticated frame bridge; values are checked and mapped into panel coordinates.
+- JSON/XML browser regressions passed with geometry checks at 420px and 320px, including a taller composer. Agent transport and Chat reference browser regressions passed.
+- Floating-layout checks use local fixtures; the real signed-in sending acceptance above remains evidence for the unchanged Chat send repair.
