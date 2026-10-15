@@ -263,7 +263,7 @@
     }
   }
   const norm=s=>String(s||'').replace(/\s+/g,' ').trim();
-  const t=k=>labels[k]||({shortPage:'Page',shortSelection:'Selection',viewContext:'Show reference',hideContext:'Hide reference',preview:'Preview reference',remove:'Remove highlight',quoteNote:'References are added when needed.',localFoldNote:'Local display only. The reference remains in the sent message.'})[k]||k;
+  const t=k=>labels[k]||({shortPage:'Page',shortSelection:'Selection',viewContext:'Show reference',hideContext:'Hide reference',preview:'Preview reference',remove:'Remove highlight',quoteNote:'References are added when needed.',localFoldNote:'Local display only. The reference remains in the sent message.',selectionPrompt:'Explain the selected text.',sendSelection:'Send selection',selectionBusy:'Wait for the current response to finish.',selectionSendTimeout:'ChatGPT did not enable sending in time. Your draft has been kept.'})[k]||k;
   const post=m=>{try{port?.postMessage(m);}catch{}};
   function composer(){return document.querySelector('[data-composer-body] [contenteditable="true"][data-composer-markdown],#prompt-textarea[contenteditable="true"],textarea#prompt-textarea')||document.querySelector('form textarea,form [contenteditable="true"],[data-testid*="composer"] [contenteditable="true"]');}
   function read(el){return el?(typeof el.value==='string'?el.value:el.innerText||el.textContent||''):'';}
@@ -313,7 +313,7 @@
   // Unlike Send, Stop/Voice must never be activated by the quick-send flow.
   function nativeIsGenerating(el=composer()){
     const root=el?.closest('[data-composer-body],form')||document;
-    const selector='button[data-testid="stop-button"],button[data-testid*="stop-generating" i],button[aria-label="Stop generating"],button[aria-label="Stop streaming"],button[aria-label="Stop response"],button[aria-label="停止生成"],button[aria-label="停止回答"]';
+    const selector='button[data-testid="stop-button"],button[data-testid*="stop-generating" i],button[aria-label="Stop generating"],button[aria-label="Stop streaming"],button[aria-label="Stop response"],button[aria-label="Stop"],button[aria-label="停止生成"],button[aria-label="停止回答"],button[aria-label="停止"]';
     return [...root.querySelectorAll(selector)].some(button=>!!visibleRect(button));
   }
   function selectionSendStatus(){
