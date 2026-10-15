@@ -103,23 +103,62 @@ export async function chrome(config, zip, version, request, polling) {
   if (!['PENDING_REVIEW', 'PUBLISHED', 'PUBLISHED_TO_TESTERS'].includes(result.state)) fail('Chrome submission: unexpected state; inspect store dashboard');
   return result.state;
 }
+// The Edge API returns machine-readable failure codes. Log only documented codes
+// and bounded/redacted validation messages; never echo response bodies or credentials.
+const EDGE_ERROR_HINTS = {
+  CreateNotAllowed: 'first publication must be completed in Partner Center',
+  NoModulesUpdated: 'no newer module is available; check the draft/version before retrying',
+  InProgressSubmission: 'an earlier submission is still being reviewed; do not retry yet',
+  UnpublishInProgress: 'product unpublishing is in progress',
+  ModuleStateUnPublishable: 'a product module is invalid; fix it in Partner Center',
+  SubmissionValidationError: 'submission validation failed; fix the listed fields in Partner Center',
+};
+function edgeDetail(value, config) {
+  const input = typeof value === 'string' ? value : typeof value?.message === 'string' ? value.message : '';
+  if (!input) return '';
+  let output = input.replace(/[\x00-\x1f\x7f]/g, ' ').replace(/::/g, ': :');
+  for (const secret of [config.EDGE_API_KEY, config.EDGE_CLIENT_ID]) {
+    if (typeof secret === 'string' && secret.length > 2) output = output.replaceAll(secret, '[redacted]');
+  }
+  return output
+    .replace(/\b(?:ApiKey|Bearer)\s+\S+/gi, '[redacted credential]')
+    .replace(/\beyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g, '[redacted token]')
+    .replace(/[A-Za-z0-9+/_=-]{64,}/g, '[redacted long value]')
+    .slice(0, 180);
+}
+export function edgeFailure(label, body, config) {
+  const status = ['Failed', 'InProgress', 'Succeeded'].includes(body.status) ? body.status : 'Unexpected';
+  const knownCode = typeof body.errorCode === 'string' && Object.hasOwn(EDGE_ERROR_HINTS, body.errorCode) ? body.errorCode : '';
+  const code = knownCode || (body.errorCode ? 'unrecognized' : 'none');
+  const hint = knownCode ? EDGE_ERROR_HINTS[knownCode] : 'inspect Partner Center for details';
+  const details = Array.isArray(body.errors)
+    ? body.errors.slice(0, 3).map(item => edgeDetail(item, config)).filter(Boolean)
+    : [];
+  const suffix = details.length ? `; validation: ${details.join(' | ')}` : '';
+  return `${label}: status=${status}, errorCode=${code}; ${hint}${suffix}`;
+}
 export function operation(response) {
   // Official contract is an operation ID, not an arbitrary URL to follow.
   const id = response.headers.get('location');
   if (!id || !/^[a-zA-Z0-9_-]{1,128}$/.test(id)) fail('Edge response: missing or invalid Location operation ID');
   return id;
 }
-export async function edge(config, zip, version, request, polling) {
+export async function edge(config, zip, version, request, polling, onOperation = () => {}) {
   const root = `https://api.addons.microsoftedge.microsoft.com/v1/products/${config.EDGE_PRODUCT_ID}/submissions`;
   const headers = { Authorization: `ApiKey ${config.EDGE_API_KEY}`, 'X-ClientID': config.EDGE_CLIENT_ID };
   const upload = await request('Edge upload', `${root}/draft/package`, {
     method: 'POST', headers: { ...headers, 'Content-Type': 'application/zip' }, body: zip,
   }, 202, false);
   const uploadId = operation(upload);
+  onOperation('upload', uploadId);
   const check = (label, url, id) => poll(label, async () => {
     // Live Edge operation polling also returns HTTP 202 while processing.
     const status = await request(label, url, { headers }, [200, 202]);
-    if (status.id !== id || status.errorCode || (status.errors && (!Array.isArray(status.errors) || status.errors.length))) fail(`${label}: invalid or failed operation`);
+    if (status.id !== id) fail(`${label}: operation identity mismatch`);
+    if (!['InProgress', 'Succeeded'].includes(status.status) ||
+        status.errorCode || (status.errors && (!Array.isArray(status.errors) || status.errors.length))) {
+      fail(edgeFailure(label, status, config));
+    }
     return status;
   }, 'status', 'Succeeded', 'InProgress', polling);
   await check('Edge upload status', `${root}/draft/package/operations/${uploadId}`, uploadId);
@@ -129,6 +168,7 @@ export async function edge(config, zip, version, request, polling) {
     body: `Automated SakuraMeter release ${version}.`,
   }, 202, false);
   const submitId = operation(submitted);
+  onOperation('submission', submitId);
   await check('Edge submission status', `${root}/operations/${submitId}`, submitId);
   return 'Succeeded';
 }
@@ -143,7 +183,17 @@ export async function run(store, env = process.env, dependencies = {}) {
   try { zip = await readFile(path); } catch { fail('Release ZIP cannot be read'); }
   if (createHash('sha256').update(zip).digest('hex') !== expectedHash) fail('Release ZIP checksum mismatch');
   const request = client(dependencies.fetchImpl);
-  const state = await (store === 'chrome' ? chrome : edge)(config, zip, version, request, dependencies.polling);
+  const state = store === 'chrome'
+    ? await chrome(config, zip, version, request, dependencies.polling)
+    : await edge(config, zip, version, request, dependencies.polling, (stage, id) => {
+      // Location is an operation identifier, not an API credential. Persist a
+      // validated GUID to Actions logs so a failed run can later be inspected by GET.
+      if (/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(id)) {
+        console.log(`Edge ${stage} operation ID: ${id}`);
+      } else {
+        console.log(`Edge ${stage} operation ID received (non-GUID; omitted)`);
+      }
+    });
   return `${store}: submission accepted (${state}); review/certification is separate`;
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
