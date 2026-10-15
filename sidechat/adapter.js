@@ -9,10 +9,10 @@
   let dismissedSource='',captureSource='',pageDismissed=false,deduplicatePage=true,pendingSend=null,pendingDelivery=null,replaying=false,delivering=false,ledgerEpoch=0;
   const pageLedger=new Map();
   let port=null,context=null,labels={},theme='dark',captureStatus='',prepared={},statusLast='',lastAnnounce=0;
-  let queued=0,writing=false,editorLast=null,rawRoute=location.pathname,route=chatID()||'draft:'+crypto.randomUUID();
+  let queued=0,writing=false,editorLast=null,rawRoute=location.pathname,route=chatID()||'draft:'+crypto.randomUUID(),quickSend=null;
   let lastPrepared='',disposed=false,observer=null,recentRequest=null;
   const receipts=[],knownNodes=new WeakSet(),knownIDs=new Set();
-  const provisionalTTL=8000,receiptTTL=60000;
+  const provisionalTTL=8000,receiptTTL=60000,quickSendTimeout=10000;
   const NATIVE_STYLE_ID='sakura-sidechat-native-style',NATIVE_BAR_ID='sakura-sidechat-native-bar',NATIVE_BRAND_ID='sakura-native-brand-svg';
   function hideNativeModeSwitch(){
     const controls=[...document.querySelectorAll('button,[role="button"],[role="tab"]')]
@@ -233,6 +233,15 @@
     `;
     (document.head||document.documentElement).appendChild(style);return style;
   }
+  // The menu lives in the parent extension page. Pointer events inside this
+  // cross-origin frame never bubble there, so explicitly relay click-away.
+  // Do not dismiss for the two menu triggers: their own click toggles the menu.
+  document.addEventListener('pointerdown',e=>{
+    const target=e.target;
+    if(target instanceof Element&&target.closest('#'+NATIVE_BAR_ID+' button[data-sm-action="more"],#'+NATIVE_BAR_ID+' button[data-sm-action="status"]'))return;
+    nativeAction('dismiss-popovers');
+  },true);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')nativeAction('dismiss-popovers');},true);
   function nativeAction(action){
     try{window.parent.postMessage({source:'SAKURA_SIDECHAT_FRAME',type:'SC_UI_ACTION',action},origin);}catch{}
   }
@@ -244,7 +253,7 @@
     if(!bar&&document.body){
       bar=document.createElement('div');bar.id=NATIVE_BAR_ID;bar.dataset.sakuraSidechat='native-bar';
       const icon=chrome.runtime.getURL('assets/sakurameter-32.png');
-      bar.innerHTML=`<img class="sm-mark" src="${icon}" alt=""><span class="sm-brand"><span class="sm-name">SakuraMeter</span><span class="sm-slash">/</span><span class="sm-context">Side Chat</span></span><span class="sm-actions"><button type="button" data-sm-action="status" aria-label="Side Chat status"><span class="sm-status-dot"></span></button><button type="button" data-sm-action="more" aria-label="SakuraMeter menu"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></span>`;
+      bar.innerHTML=`<img class="sm-mark" src="${icon}" alt=""><span class="sm-brand"><span class="sm-context">Side Chat</span></span><span class="sm-actions"><button type="button" data-sm-action="status" aria-label="Side Chat status"><span class="sm-status-dot"></span></button><button type="button" data-sm-action="more" aria-label="SakuraMeter menu"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></span>`;
       bar.addEventListener('click',e=>{const b=e.target instanceof Element?e.target.closest('button[data-sm-action]'):null;if(b)nativeAction(b.dataset.smAction);});
       document.body.appendChild(bar);
     }
@@ -254,13 +263,25 @@
     }
   }
   const norm=s=>String(s||'').replace(/\s+/g,' ').trim();
-  const t=k=>labels[k]||({shortPage:'Page',shortSelection:'Selection',viewContext:'Show reference',hideContext:'Hide reference',preview:'Preview reference',remove:'Remove highlight',quoteNote:'References are added when needed.',localFoldNote:'Local display only. The reference remains in the sent message.'})[k]||k;
+  const t=k=>labels[k]||({shortPage:'Page',shortSelection:'Selection',viewContext:'Show reference',hideContext:'Hide reference',preview:'Preview reference',remove:'Remove highlight',quoteNote:'References are added when needed.',localFoldNote:'Local display only. The reference remains in the sent message.',selectionPrompt:'Explain the selected text.',sendSelection:'Send selection',selectionBusy:'Wait for the current response to finish.',selectionSendTimeout:'ChatGPT did not enable sending in time. Your draft has been kept.'})[k]||k;
   const post=m=>{try{port?.postMessage(m);}catch{}};
   function composer(){return document.querySelector('[data-composer-body] [contenteditable="true"][data-composer-markdown],#prompt-textarea[contenteditable="true"],textarea#prompt-textarea')||document.querySelector('form textarea,form [contenteditable="true"],[data-testid*="composer"] [contenteditable="true"]');}
   function read(el){return el?(typeof el.value==='string'?el.value:el.innerText||el.textContent||''):'';}
+  const SEND_SELECTOR='[data-testid="send-button"],button[data-testid*="send-button"],button[aria-label="Send prompt"],button[aria-label="Send message"],button[aria-label="Send"],button[aria-label="\u53d1\u9001\u6d88\u606f"],button[aria-label="\u53d1\u9001\u63d0\u793a"]';
   function sendButton(el=composer()){
-    const q='[data-testid="send-button"],button[data-testid*="send-button"],button[aria-label="Send prompt"],button[aria-label="Send message"],button[aria-label="Send"],button[aria-label="\u53d1\u9001\u6d88\u606f"],button[aria-label="\u53d1\u9001\u63d0\u793a"]';
-    return el?.closest('[data-composer-body],form')?.querySelector(q)||document.querySelector(q);
+    const root=el?.closest('[data-composer-body],form')||document;
+    const candidates=[...root.querySelectorAll(SEND_SELECTOR)];
+    // Use the same visible control for the original event interception and
+    // for the later delivery click; a hidden stale Send node is not authoritative.
+    return candidates.find(button=>!disabled(button)&&!!visibleRect(button))||
+      candidates.find(button=>!!visibleRect(button))||candidates[0]||
+      (root===document?null:document.querySelector(SEND_SELECTOR));
+  }
+  function readyNativeSendButton(el=composer()){
+    // During transitions ChatGPT can temporarily keep hidden/disabled Send nodes.
+    // Only click a visibly enabled Send belonging to this exact composer.
+    const root=el?.closest('[data-composer-body],form')||document;
+    return [...root.querySelectorAll(SEND_SELECTOR)].find(button=>!disabled(button)&&!!visibleRect(button))||null;
   }
   function modelLabel(){
     const clean=raw=>K.clean(raw,90).replace(/[\s\u00a0]+/g,' ').replace(/[›⌄▾\s]+$/g,'').trim();
@@ -300,7 +321,26 @@
     for(let i=receipts.length-1;i>=0;i--){const r=receipts[i];if(!r.counted&&d.at>=r.at-250&&d.at-r.at<7000){r.request=snap;break;}}
   }
   window.addEventListener('message',observeRequestMessage,false);
-  const disabled=b=>!b||b.disabled||b.getAttribute('aria-disabled')==='true';
+  const disabled=b=>!b||b.disabled||b.getAttribute('aria-disabled')==='true'||!!b.closest('[inert]');
+  // Unlike Send, Stop/Voice must never be activated by the quick-send flow.
+  function nativeIsGenerating(el=composer()){
+    const root=el?.closest('[data-composer-body],form')||document;
+    const selector='button[data-testid="stop-button"],button[data-testid*="stop-generating" i],button[data-testid*="stop-button" i],button[aria-label^="Stop " i],button[aria-label="Stop generating"],button[aria-label="Stop streaming"],button[aria-label="Stop response"],button[aria-label="Stop"],button[aria-label="停止生成"],button[aria-label="停止回答"],button[aria-label="停止"]';
+    return [...root.querySelectorAll(selector)].some(button=>!!visibleRect(button));
+  }
+  function selectionSendStatus(){
+    if(!port||disposed||!composer()||!K.validSelection(context?.selection))return 'unavailable';
+    if(quickSend||pendingSend||pendingDelivery)return 'pending';
+    return nativeIsGenerating()?'generating':'ready';
+  }
+  function cancelQuickSend(){
+    const pending=quickSend;
+    if(!pending)return;
+    quickSend=null;
+    clearTimeout(pending.timer);
+    cancelAnimationFrame(pending.frame);
+    schedule();
+  }
   const messageID=n=>{
     if(!(n instanceof Element))return '';
     const direct=n.getAttribute('data-message-id')||n.getAttribute('data-message-uuid');if(direct)return direct;
@@ -348,6 +388,7 @@
   }
   function clearPageLedger(){pageLedger.clear();ledgerEpoch++;}
   function cancelPending(){
+    cancelQuickSend();
     if(pendingSend){clearTimeout(pendingSend.timer);pendingSend=null;}
     if(pendingDelivery){const r=pendingDelivery;pendingDelivery=null;clearTimeout(r.timer);cancelAnimationFrame(r.frame);
       if(r.editor===composer()&&norm(read(r.editor))===r.expectedNorm){try{writing=true;setText(r.editor,r.question);}catch{}finally{writing=false;}}
@@ -387,7 +428,51 @@
     pendingSend=request;request.timer=setTimeout(()=>completeSnapshot({requestId:id,ok:false}),2000);
     post({type:'SC_ENSURE_PAGE',requestId:id,pageIdentity:captureSource});
   }
-  const view=SakuraSideView.create({composer,translate:t,onDismiss:()=>setPageReference(false),onRestore:()=>setPageReference(true),onClear:item=>{
+  function sendSelectionOnly(){
+    const el=composer();
+    if(selectionSendStatus()!=='ready'||!el||read(el).trim())return;
+    const question=t('selectionPrompt');
+    // Preserve the precise selected passage that the user chose to send.
+    const request={editor:el,question,route,contextId:context.id,selectionKey:K.selectionKey(context),
+      deadline:Date.now()+quickSendTimeout,timer:0,frame:0};
+    try{writing=true;setText(el,question);}
+    catch{post({type:'SC_ERROR',key:'sendError'});return;}
+    finally{writing=false;}
+    quickSend=request;
+    function attempt(){
+      if(quickSend!==request)return;
+      syncRoute();
+      // Never send after an edit, route switch, stale/removed selection, disconnect
+      // or a new generation. A canceled attempt leaves the user's draft intact.
+      if(disposed||!port||composer()!==el||route!==request.route||
+         norm(read(el))!==norm(request.question)||pendingSend||pendingDelivery||
+         !K.validContext(context)||context.id!==request.contextId||
+         !K.validSelection(context.selection)||K.selectionKey(context)!==request.selectionKey){
+        cancelQuickSend();return;
+      }
+      if(nativeIsGenerating(el)){
+        cancelQuickSend();post({type:'SC_ERROR',key:'selectionBusy'});return;
+      }
+      const button=readyNativeSendButton(el);
+      if(button){
+        cancelQuickSend();
+        // The normal click listener still runs freshness checks, attaches the
+        // existing Page/Selection references and tracks actual message delivery.
+        button.click();return;
+      }
+      if(Date.now()>=request.deadline){
+        cancelQuickSend();
+        post({type:'SC_ERROR',key:'selectionSendTimeout'});
+        return;
+      }
+      request.timer=setTimeout(attempt,120);
+    }
+    // Wait for React/ProseMirror to commit the new text, then watch the native
+    // Voice -> Send / disabled gray Send -> enabled Send transitions.
+    request.frame=requestAnimationFrame(()=>{if(quickSend===request)request.frame=requestAnimationFrame(attempt);});
+    schedule();
+  }
+  const view=SakuraSideView.create({composer,translate:t,selectionSendStatus,onSendSelection:sendSelectionOnly,onDismiss:()=>setPageReference(false),onRestore:()=>setPageReference(true),onClear:item=>{
     cancelPending();
     post({type:'SC_CLEAR',id:item.id,selectionKey:K.selectionKey(item)});
     if(context?.id===item.id)context={...context,selection:null};rebuild();render();
@@ -402,6 +487,9 @@
     if(status!==statusLast){statusLast=status;post(JSON.parse(status));}
   }
   function handleSend(event){
+    // If the user sends manually before the queued quick-send is ready,
+    // abandon the queue to guarantee a single native submission.
+    if(quickSend)cancelQuickSend();
     if(writing||delivering||!port)return;
     if(pendingDelivery){event.preventDefault();event.stopImmediatePropagation();return;}
     const el=composer(),question=read(el);
@@ -543,14 +631,20 @@
     });
     observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['data-message-id','data-message-status']});
     document.addEventListener('input',e=>{
-      if(!writing){const el=composer();if(pendingSend&&(el===e.target||el?.contains(e.target)))pendingSend.cancelled=true;if(pendingDelivery&&(el===e.target||el?.contains(e.target))&&read(el)!==pendingDelivery.expected)cancelPending();if(el&&(el===e.target||el.contains(e.target)))for(const r of receipts)if(r.editor===el)r.consumed=true;}
+      if(!writing){const el=composer();if(quickSend&&(el===e.target||el?.contains(e.target)))cancelQuickSend();if(pendingSend&&(el===e.target||el?.contains(e.target)))pendingSend.cancelled=true;if(pendingDelivery&&(el===e.target||el?.contains(e.target))&&read(el)!==pendingDelivery.expected)cancelPending();if(el&&(el===e.target||el.contains(e.target)))for(const r of receipts)if(r.editor===el)r.consumed=true;}
       schedule();
     },true);
   }
   if(document.documentElement)observe();else document.addEventListener('DOMContentLoaded',observe,{once:true});
   if(document.body)ensureNativeBar();else document.addEventListener('DOMContentLoaded',ensureNativeBar,{once:true});
   window.addEventListener('resize',syncScrollbarBoundary);
-  const timer=setInterval(()=>{announce();if(receipts.length||editorLast!==composer()||rawRoute!==location.pathname){editorLast=composer();schedule();}},500);
+  let lastGenerationVisible=false;
+  const timer=setInterval(()=>{
+    announce();
+    const generating=!!K.validSelection(context?.selection)&&nativeIsGenerating();
+    if(generating!==lastGenerationVisible){lastGenerationVisible=generating;schedule();}
+    if(receipts.length||editorLast!==composer()||rawRoute!==location.pathname){editorLast=composer();schedule();}
+  },500);
   window.addEventListener('pagehide',()=>{disposed=true;cancelPending();clearPageLedger();clearInterval(timer);clearTimeout(queued);observer?.disconnect();scrollbarObserver?.disconnect();window.removeEventListener('resize',syncScrollbarBoundary);context=null;receipts.length=0;port?.close();});
   announce();
 })();

@@ -240,6 +240,7 @@
     if (event.source !== frame.contentWindow || event.origin !== 'https://chatgpt.com' || event.data?.source !== 'SAKURA_SIDECHAT_FRAME') return;
     if (event.data?.type === 'SC_UI_ACTION') {
       const action = event.data.action;
+      if (action === 'dismiss-popovers') { closePopovers(); return; }
       if (action === 'refresh') { post({ type: 'SC_REFRESH', force: true }); try { bridge?.postMessage({type:'SC_FORGET_PAGE'}); } catch {} }
       else if (action === 'more') { const show = $('more-menu').hidden; closePopovers(); $('more-menu').hidden = !show; $('more').setAttribute('aria-expanded',String(show)); }
       else if (action === 'status') { const show = $('status-popover').hidden; closePopovers(); $('status-popover').hidden = !show; $('status').setAttribute('aria-expanded',String(show)); }

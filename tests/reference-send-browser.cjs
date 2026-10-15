@@ -104,6 +104,16 @@ async function run(){
   await update('MODERN_PAGE','Never going to use the CLI but loved the vid nonetheless.');
   const entered=await modernSend('还有这个',true);assert.ok(entered.includes('<Selection>\nNever going'));assert.ok(entered.includes('PageReference: active; unchanged'));
   await update('MODERN_PAGE','Selection alone');await frame.locator('.remove-page').click();const alone=await modernSend('这个');assert.ok(alone.includes('<Selection>\nSelection alone'));assert.ok(!alone.includes('<PageContext>'));
+  // Basic selection-only send through an enabled mock Send button. Native Voice/Stop/gray-disabled transitions still need manual browser verification.
+  await update('MODERN_PAGE','Quick selection without typing');
+  await frame.locator('[data-composer-markdown]').fill('');
+  const quickBefore=await frame.evaluate(()=>submits.length);
+  await frame.locator('.send-selection').click();
+  await frame.waitForFunction(n=>submits.length===n+1,quickBefore);
+  const quick=await frame.evaluate(()=>submits.at(-1));
+  assert.ok(quick.includes('<Selection>\nQuick selection without typing'));
+  assert.ok(quick.includes('<UserRequest>\nExplain the selected text.'));
+  await frame.locator('[data-composer-markdown]').fill('');
   await frame.locator('[data-composer-markdown]').fill('do not submit while generating');await frame.locator('[aria-label=Send]').evaluate(b=>{b.hidden=true;b.disabled=true;});
   const stopped=await frame.evaluate(()=>submits.length);await frame.locator('[data-composer-markdown]').press('Enter');assert.equal(await frame.evaluate(()=>submits.length),stopped);
   // Current ChatGPT scroll surface spans behind a bottom-fixed composer.
