@@ -1,6 +1,6 @@
 <!doctype html>
 <html data-sakura-surface="b" lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>SakuraMeter Side Chat</title><link rel="stylesheet" href="panel.css"><link rel="stylesheet" href="../frontend/b-surface.css"><link rel="stylesheet" href="../frontend/native-light.css"><link rel="stylesheet" href="../frontend/reference-hybrid.css"><link rel="stylesheet" href="../frontend/soft-welcome.css">
-<link rel="stylesheet" href="../motion.css"><script src="../motion.js"></script>
+<link rel="stylesheet" href="../motion.css"><link rel="stylesheet" href="agent.css"><script src="../motion.js"></script>
 </head>
 <body data-side-stage="preview">
 <div class="sm-ambient sm-ambient-flow" aria-hidden="true">
@@ -49,10 +49,15 @@
   <button id="theme" role="menuitem"><svg><use href="#i-sun"/></svg><span data-t="theme"></span></button>
   <button id="language" role="menuitem"><span id="language-label" class="menu-language">EN</span><span data-t="language"></span></button>
   <button id="settings" role="menuitem"><svg><use href="#i-sliders"/></svg><span data-t="settings"></span></button>
-  <small class="menu-version">SakuraMeter 3.6.0.66</small>
+  <small class="menu-version">SakuraMeter 3.7.0.7</small>
 </div>
 <div id="accessbar" class="notice access-notice" hidden><button id="grant-site" class="text-button" data-t="access">Enable page context on this site</button></div>
 <div id="toast" class="notice toast" role="status" aria-live="polite" hidden></div>
+<section id="sakura-agent-bar" hidden aria-label="SakuraMeter Agent">
+  <div class="agent-toolbar"><span id="agent-state" role="status" aria-live="polite"></span><button id="agent-stop" data-agent-t="agentStop" hidden>Stop</button></div>
+  <p id="agent-detail"></p><button id="agent-approve" data-agent-t="agentApprove" hidden></button><button id="agent-deny" data-agent-t="agentDismiss" hidden></button>
+  <details hidden><summary data-agent-t="agentLog">Task activity</summary><ol id="agent-events"></ol></details><div id="agent-answer" hidden></div>
+</section>
 <main class="workspace">
 <section id="welcome" class="welcome" hidden>
   <div class="welcome-art"><div class="halo"></div><img src="../assets/sakurameter-128.png" alt=""></div>
@@ -74,9 +79,10 @@
 </div>
 <dialog id="preferences"><div class="dialog-head"><h2 data-t="settingsTitle">Side Chat preferences</h2><button id="close-settings" class="icon-button" data-tip="close"><svg><use href="#i-close"/></svg></button></div>
 <div class="setting-block"><label class="reference-setting"><span data-t="pageReferenceLabel">Page reference</span><input id="page-reference-toggle" type="checkbox" role="switch" checked></label><p data-t="pageReferenceNote"></p><label class="reference-setting"><span data-t="deduplicatePageLabel">Deduplicate page</span><input id="deduplicate-page-toggle" type="checkbox" role="switch" checked></label><p data-t="deduplicatePageNote"></p></div>
+<div class="setting-block agent-settings"><h3 data-agent-t="agentSettings">Agent settings</h3><p data-agent-t="agentNote"></p><label><span data-agent-t="agentFormat">Response format</span><select class="agent-select" id="agent-format"><option value="json">JSON</option><option value="xml">XML</option></select></label><p data-agent-t="agentFormatNote"></p><label><span data-agent-t="agentLimit">Maximum actions</span><input class="agent-select" id="agent-limit" type="number" min="1" max="50" value="20"></label></div>
 <div class="setting-block"><h3 data-t="captureLabel">Automatic page context</h3><p data-t="captureNote"></p><button id="settings-pause" class="secondary-button" data-t="pause"></button></div>
 <div class="setting-block"><h3 data-t="permissionsLabel">Website access</h3><p data-t="permissionsNote"></p><button id="grant-all" class="secondary-button" data-t="grantAll"></button><button id="manage" class="text-button" data-t="managePermissions"></button></div>
 <div class="setting-block"><h3 data-t="privacyTitle"></h3><p data-t="privacyBody"></p><p data-t="countNote"></p><kbd>Alt + Shift + C</kbd></div>
 </dialog>
-<script src="strings.js"></script><script src="panel.js"></script>
+<script src="strings.js"></script><script src="agent-protocol.js"></script><script src="agent-loop.js"></script><script src="agent-ui.js"></script><script src="panel.js"></script>
 </body></html>

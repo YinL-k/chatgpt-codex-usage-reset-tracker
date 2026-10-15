@@ -1,0 +1,11 @@
+#sakura-agent-bar{flex:none;position:relative;z-index:12;margin:4px 6px;padding:7px 9px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:11px/1.5 system-ui,sans-serif;max-height:38vh;overflow:auto}
+#sakura-agent-bar[hidden]{display:none}
+.agent-toolbar{display:flex;align-items:center;gap:8px}.agent-toolbar #agent-state{flex:1;min-width:0;overflow-wrap:anywhere}
+#sakura-agent-bar select,#preferences .agent-select{border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink);padding:5px 7px;font:inherit}
+#sakura-agent-bar button{border:1px solid var(--line);border-radius:7px;background:var(--rose-bg);color:var(--ink);padding:5px 8px;font:inherit;cursor:pointer}
+#sakura-agent-bar button[hidden]{display:none}#agent-detail:empty{display:none}#agent-detail{white-space:pre-wrap;overflow-wrap:anywhere;margin:7px 0}
+#agent-events{padding-left:19px;max-height:100px;overflow:auto;color:var(--muted)}#agent-events li{overflow-wrap:anywhere}
+#agent-answer{white-space:pre-wrap;overflow-wrap:anywhere;border-top:1px solid var(--line);padding-top:8px;max-height:200px;overflow:auto;font-size:12px}
+.agent-settings label{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0;font-size:12px}.agent-settings input{width:65px}
+#preferences{position:fixed;inset:0;margin:auto;max-height:calc(100dvh - 32px)}
+#sakura-agent-bar details{margin-top:5px;color:var(--muted)}#sakura-agent-bar summary{cursor:pointer}

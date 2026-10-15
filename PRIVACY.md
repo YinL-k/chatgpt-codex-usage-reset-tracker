@@ -12,7 +12,7 @@ Context stays in extension RAM/chrome.storage.session and is not added to usage 
 
 ## Sending and local display
 
-The user's native Enter/send click, or an explicit one-click Send selection action while the composer is empty, may include a prepared page excerpt and highlight in the ChatGPT draft. The explicit quick-send action waits for the native Send control to become available; selecting text alone never triggers a model request. The extension does not call a private chat-generation API or automatically resend messages. Existing ChatGPT session cookies are used by the embedded website. Submitted references are ordinary ChatGPT message text, not OpenAI-native browser attachments; account/service settings apply to that submitted data.
+The user's native Enter/send click, or an explicit one-click Send selection action while the composer is empty, may include a prepared page excerpt and highlight in the ChatGPT draft. The explicit quick-send action waits for the native Send control to become available; selecting text alone never triggers a model request. In Chat mode the extension does not call a private chat-generation API or automatically resend messages. Existing ChatGPT session cookies are used by the embedded website. Submitted references are ordinary ChatGPT message text, not OpenAI-native browser attachments; account/service settings apply to that submitted data.
 
 Pending receipts and submitted text are kept briefly in the frame for local confirmation/presentation and are not persisted as extension chat history. Receipts expire without blocking later sends. Exact selection-version checks prevent a late acknowledgment from removing a newer highlight. An observed UI message is local evidence, not a server delivery guarantee.
 
@@ -60,3 +60,13 @@ If no such metadata is observed, SakuraMeter continues to store only confirmed l
 ## Tracker reliability
 
 SakuraMeter may read the client-generated user message identifier attached to a ChatGPT send request so it can count that actual send without depending on the current button/composer DOM. The request observer does not export or persist message text, prompt content, attachments, or conversation bodies. The raw message identifier is kept only transiently in page memory; persistent usage storage contains SakuraMeter's SHA-256-derived event ID for deduplication.
+
+## Agent Beta (3.7.0.8)
+
+Agent is off by default and starts only when the user selects Agent and submits a task. It sends structured page observations, tool results and limited format-repair requests through the existing ChatGPT web composer automatically until the model finishes, asks the user, or the run stops. This consumes the existing ChatGPT account allowance and can create ordinary conversation history on ChatGPT. It does not use a model API key or a developer relay.
+
+Agent reads visible page text and supported element states, including non-sensitive input values, from the active authorized tab. The browser executor uses local, fixed DOM operations; model text is never evaluated as JavaScript. Recognized password/secret fields and file inputs are excluded; recognition is heuristic and does not guarantee that a webpage contains no sensitive text. Frames and closed shadow roots are not controlled in this beta. Recognized consequential clicks and Enter presses require a local approval; this is a heuristic, not a universal classifier.
+
+Runs, observations, model replies, results and the short activity log stay in extension/page memory. Only format and action-limit preferences are persisted under __sakuraAgentPrefsV1. Ordinary message-count receipts continue through the existing deduplicated usage writer. ChatGPT retains submitted messages under its own account settings. Selecting Chat, stopping, closing the panel, switching target tabs or losing the worker connection stops the automation; already dispatched website actions cannot be undone. Runs do not resume automatically after restart.
+
+JSON and XML are prompted text protocols with strict local validation, not API-enforced Structured Outputs. Local fixture regression covers both formats and the loop. A signed-in Chrome test verified a JSON task that scrolled down, observed the result, scrolled back up and finished. This does not establish compatibility with every site or action.

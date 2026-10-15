@@ -4,7 +4,7 @@
 
 # SakuraMeter — ChatGPT Usage Tracker & Codex Reset Monitor
 
-**ChatGPT activity heatmaps · Codex quota and reset times · Global reset forecasts & alerts · Side Chat**
+**ChatGPT activity heatmaps · Codex quota and reset times · Global reset forecasts & alerts · Side Chat · Agent Beta**
 
 [![Latest release](https://img.shields.io/github/v/release/YinL-k/chatgpt-codex-usage-reset-tracker?label=Latest%20Release)](https://github.com/YinL-k/chatgpt-codex-usage-reset-tracker/releases/latest)
 [![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-Install-4285F4?logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/hnajkeiigdkgafcobbkchpcdafddfpki)
@@ -27,6 +27,17 @@
 | **What about ChatGPT Pro usage?** | Display server-provided allowance information when available; otherwise show observed local activity and clearly labeled estimates, with manual calibration under Advanced settings. |
 
 Built for Codex developers planning coding sessions, frequent ChatGPT users exploring their activity, and students or researchers asking questions while reading.
+
+## Agent Beta: let ChatGPT operate the current page
+
+Switch **Chat / Agent · Beta** next to the plus button at the bottom left of the Side Chat composer. Agent uses your signed-in ChatGPT web session to read the authorized active tab, click, fill, select and scroll, then return observations so ChatGPT can continue, ask you, or finish. No separate model API key is required.
+
+- Choose JSON (default) or XML and an action limit in the Side Chat menu's Agent settings.
+- Open Activity beside the mode control to follow progress. Stop a task at any time; recognized sends, submissions, deletions and other consequential actions require confirmation.
+- Authorized HTTP/HTTPS pages include independent main-tab ChatGPT pages and subdomains. Frames, uploads, recognized sensitive inputs and links requiring cross-origin navigation, a new tab or a download remain outside this beta.
+- Automated task messages and page observations become ordinary ChatGPT conversation content and consume your account allowance. JSON/XML replies are locally validated text protocols; website changes or rejected synthetic events can pause a task.
+
+Version 3.7.0.8 fixes Agent sending, first-conversation route changes and reply detection on the updated ChatGPT interface, and removes the blanket ChatGPT domain exclusion. A signed-in Chrome JSON run completed scroll down, observe, scroll up and finish; this is not acceptance of every site or action.
 
 ## Codex reset: two different things
 

@@ -1,7 +1,7 @@
 /* Local-only browser regression. No extension installation and no external requests. */
 'use strict';
 const {chromium}=require('playwright'),fs=require('node:fs'),path=require('node:path'),http=require('node:http'),assert=require('node:assert/strict');
-const root=path.resolve(__dirname,'..'),out=process.env.TEST_OUTPUT||path.join(root,'tests','artifacts');fs.mkdirSync(out,{recursive:true});
+const root=process.env.SAKURA_TEST_ROOT||path.resolve(__dirname,'..'),out=process.env.TEST_OUTPUT||path.join(root,'tests','artifacts');fs.mkdirSync(out,{recursive:true});
 const report={dom:[],smoke:[],screenshots:[],externalRequests:[],errors:[]};
 const server=http.createServer((req,res)=>{if(req.url==='/favicon.ico'){res.writeHead(204);return res.end();}const url=new URL(req.url,'http://localhost'),file=path.resolve(root,'.'+url.pathname);if(!file.startsWith(root+path.sep)){res.writeHead(403);return res.end();}if(url.pathname==='/fixture'){res.setHeader('content-type','text/html');return res.end('<!doctype html><html><body><button data-testid="model-switcher-dropdown-button">GPT-6 Pro</button><section id="messages"></section><form onsubmit="return false"><textarea id="prompt-textarea"></textarea><button type="submit" data-testid="send-button">Send</button></form><script>document.querySelector("form").addEventListener("submit",e=>e.preventDefault())</script></body></html>');}try{res.setHeader('content-type',file.endsWith('.js')?'text/javascript':file.endsWith('.json')?'application/json':file.endsWith('.css')?'text/css':file.endsWith('.png')?'image/png':file.endsWith('.svg')?'image/svg+xml':'text/html');res.end(fs.readFileSync(file));}catch{res.writeHead(404);res.end();}});
 async function setup(page,opts={}){

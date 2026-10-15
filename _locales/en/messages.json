@@ -3,6 +3,6 @@
     "message": "SakuraMeter — Usage Tracker for ChatGPT & Codex"
   },
   "extensionDescription": {
-    "message": "Track ChatGPT activity, heatmaps and Codex usage limits. Local history, read-only refresh, and Sakura light and dark themes."
+    "message": "Track ChatGPT activity and Codex limits. Side Chat plus Agent Beta for webpage tasks with signed-in ChatGPT. JSON/XML supported."
   }
 }

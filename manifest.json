@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "__MSG_extensionName__",
-  "version": "3.6.0.66",
-  "version_name": "3.6.0.66",
+  "version": "3.7.0.8",
+  "version_name": "3.7.0.8",
   "description": "__MSG_extensionDescription__",
   "minimum_chrome_version": "116",
   "action": {
@@ -84,6 +84,7 @@
         "sidechat/core.js",
         "sidechat/view.js",
         "model-resolver.js",
+        "sidechat/agent-transport.js",
         "sidechat/adapter.js"
       ],
       "all_frames": true,

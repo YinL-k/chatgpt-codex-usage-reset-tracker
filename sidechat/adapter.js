@@ -14,6 +14,15 @@
   const receipts=[],knownNodes=new WeakSet(),knownIDs=new Set();
   const provisionalTTL=8000,receiptTTL=60000,quickSendTimeout=10000;
   const NATIVE_STYLE_ID='sakura-sidechat-native-style',NATIVE_BAR_ID='sakura-sidechat-native-bar',NATIVE_BRAND_ID='sakura-native-brand-svg';
+  const agent=globalThis.SakuraAgentTransport?.create({composer,read,sendButton:readyNativeSendButton,post:m=>post(m),
+    present:(node,receipt)=>view.fold(node,receipt),
+    write:(el,text)=>{try{writing=true;setText(el,text);}finally{writing=false;}},
+    submit:(button,p)=>{
+      syncRoute();const nodes=document.querySelectorAll(SELECTOR),now=Date.now();
+      receipts.push({id:p.request_id,at:now,route,editor:composer(),question:p.summary,expected:p.text,expectedNorm:norm(p.text),marker:p.request_id,tail:nodes[nodes.length-1]||null,observed:false,counted:false,consumed:false,pageKey:'',selectionKey:'',contextId:'',domModel:modelLabel(),domEffort:effortLabel()});
+      if(receipts.length>30)receipts.shift();delivering=true;try{button.click();}finally{delivering=false;}schedule();
+    }
+  });
   function hideNativeModeSwitch(){
     const controls=[...document.querySelectorAll('button,[role="button"],[role="tab"]')]
       .filter(el=>el instanceof HTMLElement&&el.offsetParent!==null);
@@ -429,6 +438,7 @@
     post({type:'SC_ENSURE_PAGE',requestId:id,pageIdentity:captureSource});
   }
   function sendSelectionOnly(){
+    if(agent?.enabled){post({type:'SC_ERROR',key:'agentTaskRequired'});return;}
     const el=composer();
     if(selectionSendStatus()!=='ready'||!el||read(el).trim())return;
     const question=t('selectionPrompt');
@@ -491,6 +501,7 @@
     // abandon the queue to guarantee a single native submission.
     if(quickSend)cancelQuickSend();
     if(writing||delivering||!port)return;
+    if(agent?.intercept(event))return;
     if(pendingDelivery){event.preventDefault();event.stopImmediatePropagation();return;}
     const el=composer(),question=read(el);
     if(!el||!question.trim()||disabled(sendButton(el)))return; // Never override ChatGPT's generation/IME controls.
@@ -508,7 +519,7 @@
     const reuse=usePage&&deduplicatePage&&pageLedger.get(route)?.version===version;
     const variant=reuse?K.prepare(context,{includePage:false,includeSelection:useSelection,pageReuse:true}):usePage?(useSelection?prepared.full:prepared.page):(useSelection?prepared.focus:null);
     const id=crypto.randomUUID(),marker=variant?.body?'SAKURA_CONTEXT_'+id.replaceAll('-',''):'';
-    const expected=K.wrap(question,variant,id);
+    const expected=K.wrap(agent?agent.plain(question):question,variant,id);
     const nodes=document.querySelectorAll(SELECTOR),tail=nodes[nodes.length-1]||null;
     const r={id,at:now,route,editor:el,question,expected,expectedNorm:norm(expected),marker,tail,observed:false,counted:false,consumed:false,
       pageKey:variant?.pageKey||'',pageVersion:variant?.hasPage?version:'',pageEpoch:ledgerEpoch,selectionKey:variant?.selectionKey||'',contextId:context?.id||'',
@@ -579,7 +590,7 @@
           // Rendered Markdown/links may differ from the submitted text. A random
           // per-send marker is stable; full-message equality and IDs are NOT required.
           const text=n.textContent||'';
-          if(r.marker?!text.includes(r.marker):norm(text)!==norm(r.question))continue;
+          if(r.marker?!text.includes(r.marker):norm(text)!==r.expectedNorm)continue;
           if(failed(n)){r.failed=true;continue;}
           if(!r.consumed&&norm(draft)===r.expectedNorm)continue;
           knownNodes.add(n);accept(r,n);break;
@@ -607,6 +618,7 @@
     port?.close();port=e.ports[0];
     port.onmessage=event=>{
       const m=event.data;
+      if(m && agent?.receive(m)){if(m.type!=='SC_AGENT_PRESENT'){cancelQuickSend();cancelPending();}return;}
       if(m?.type==='SC_PAGE_SNAPSHOT_RESULT'){completeSnapshot(m);return;}
       if(m?.type==='SC_PAGE_REFERENCE'){setPageReference(m.value===true);return;}
       if(m?.type==='SC_FORGET_PAGE'){clearPageLedger();return;}
@@ -631,6 +643,7 @@
     });
     observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['data-message-id','data-message-status']});
     document.addEventListener('input',e=>{
+      if(!writing)agent?.onInput(e);
       if(!writing){const el=composer();if(quickSend&&(el===e.target||el?.contains(e.target)))cancelQuickSend();if(pendingSend&&(el===e.target||el?.contains(e.target)))pendingSend.cancelled=true;if(pendingDelivery&&(el===e.target||el?.contains(e.target))&&read(el)!==pendingDelivery.expected)cancelPending();if(el&&(el===e.target||el.contains(e.target)))for(const r of receipts)if(r.editor===el)r.consumed=true;}
       schedule();
     },true);
@@ -641,10 +654,11 @@
   let lastGenerationVisible=false;
   const timer=setInterval(()=>{
     announce();
+    agent?.tick();
     const generating=!!K.validSelection(context?.selection)&&nativeIsGenerating();
     if(generating!==lastGenerationVisible){lastGenerationVisible=generating;schedule();}
     if(receipts.length||editorLast!==composer()||rawRoute!==location.pathname){editorLast=composer();schedule();}
   },500);
-  window.addEventListener('pagehide',()=>{disposed=true;cancelPending();clearPageLedger();clearInterval(timer);clearTimeout(queued);observer?.disconnect();scrollbarObserver?.disconnect();window.removeEventListener('resize',syncScrollbarBoundary);context=null;receipts.length=0;port?.close();});
+  window.addEventListener('pagehide',()=>{agent?.cancel();disposed=true;cancelPending();clearPageLedger();clearInterval(timer);clearTimeout(queued);observer?.disconnect();scrollbarObserver?.disconnect();window.removeEventListener('resize',syncScrollbarBoundary);context=null;receipts.length=0;port?.close();});
   announce();
 })();

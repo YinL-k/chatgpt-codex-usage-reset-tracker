@@ -4,7 +4,7 @@
 
 # SakuraMeter — ChatGPT Usage Tracker & Codex Reset Monitor
 
-**ChatGPT 使用热力图 · Codex 额度与重置时间 · 全球 Reset 预测与提醒 · Side Chat**
+**ChatGPT 使用热力图 · Codex 额度与重置时间 · 全球 Reset 预测与提醒 · Side Chat · Agent Beta**
 
 *Track ChatGPT activity, Codex usage limits, reset times, and experimental global reset forecasts.*
 
@@ -29,6 +29,17 @@
 | **Pro 额度显示不完整怎么办？** | 对可获取的服务端额度与周期信息直接展示；不足时保留本地观测，支持在 Advanced 中人工校准，估算会明确标注。 |
 
 适合需要规划 Codex 工作时间的开发者、想回顾 ChatGPT 使用习惯的高频用户，以及希望边阅读边提问的学生和研究者。
+
+## Agent Beta：让 ChatGPT 操作当前网页
+
+在 Side Chat 输入框左下角、加号旁切换 **Chat / Agent · Beta**。Chat 保持普通问答；Agent 使用你已登录的 ChatGPT 网页会话，读取当前已授权标签页，执行点击、填写、选择和滚动，并把执行结果交给 ChatGPT 决定继续、提问或结束。无需另配模型 API Key。
+
+- **格式可选：** 在 Side Chat 菜单的 Agent 设置中选择 JSON（默认）或 XML，并设置每项任务的动作上限。
+- **过程可见：** Agent 右侧的 Activity 展示任务进度，可停止任务；识别到发送、提交、删除等操作时需要确认。
+- **网页范围：** 支持已授权的 HTTP/HTTPS 页面，包括独立主标签页中的 ChatGPT 页面及其子域名。暂不操作 iframe、文件上传、识别出的密码/敏感输入框或需要跨域、新标签页、下载的链接。
+- **账户与数据：** 自动发送的任务和网页观察会进入正常 ChatGPT 会话并消耗账户额度；JSON/XML 是经过本地校验的文本协议。网页结构变化或拒绝模拟事件时，任务可能暂停。
+
+3.7.0.8 修复了 Agent 发送、首次会话路由变化及新版 ChatGPT 回复识别，并取消对 ChatGPT 域名的整站排除。已在登录 Chrome 中验证“向下滚动 → 观察 → 向上滚动 → 结束”的 JSON 循环；这不代表所有网站和动作都已验收。
 
 ## Codex Reset：先区分两件事
 

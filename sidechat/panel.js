@@ -3,6 +3,7 @@
   const $ = id => document.getElementById(id), frame = $('chat-frame');
   let lang = 'en', theme = 'dark', state = null, lifecycle = null, bridge = null, bridgeID = '', frameLoaded = false, hasDraft = false;
   let frameReady = false, connected = false;
+  const agent = SakuraAgentUI.create({enabled:()=>!!state?.enabled,windowId:()=>windowId,send:m=>{try{bridge?.postMessage(m);}catch{}}});
   let windowId = null, disposed = false, reconnectTimer = 0, heartbeat = 0, helpTimer = 0, toastTimer = 0, transitionTimer = 0, previewFadeTimer = 0, revealFallbackTimer = 0, lastChatURL = 'https://chatgpt.com/';
   let chatVisible = false, pendingChatReveal = false, ambientHandoffAnimations = [];
   // Sample once per panel opening; normal renders must never move the lights.
@@ -25,6 +26,7 @@
     try { bridge?.postMessage({ type: 'SC_UPDATE', context: state?.context || null, pageDismissed:state?.pageDismissed, source:state?.source, deduplicatePage:state?.deduplicatePage!==false, theme, lang, captureStatus: state?.status || '', labels: SakuraSideStrings[lang] }); } catch {}
   }
   function applyLanguage() {
+    agent.language(lang);
     document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
     document.querySelectorAll('[data-t]').forEach(el => { el.textContent = t(el.dataset.t); });
     document.querySelectorAll('[data-tip]').forEach(el => { el.title = t(el.dataset.tip); el.setAttribute('aria-label', t(el.dataset.tip)); });
@@ -58,6 +60,7 @@
     } catch { reconnectTimer = setTimeout(connect, 1500); }
   }
   function render() {
+    agent.render();
     if (!state) return;
     $('page-reference-toggle').checked=!state.pageDismissed;
     $('deduplicate-page-toggle').checked=state.deduplicatePage!==false;
@@ -231,6 +234,7 @@
   function disposeBridge() { bridge?.close(); bridge = null; bridgeID = ''; hasDraft = false; clearTimeout(helpTimer); }
   function loadChat(url) {
     if (hasDraft && !confirm(t('draftConfirm'))) return;
+    void agent.stop();
     disposeBridge(); frameLoaded = true;
     frameReady = false; updateStatus(); $('load-help').hidden = true;
     lastChatURL = url; syncChatSurface(url); frame.src = url;
@@ -249,10 +253,12 @@
     if (event.data?.type !== 'SC_READY') return;
     const id = event.data.bridgeID;
     if (typeof id !== 'string' || id === bridgeID) return;
+    if(bridgeID)void agent.stop();
     bridge?.close(); bridgeID = id;
     const channel = new MessageChannel(); bridge = channel.port1;
     bridge.onmessage = e => {
       const m = e.data || {};
+      if(agent.receive(m))return;
       if (m.type === 'SC_STATUS') {
         hasDraft = m.hasDraft === true;
         frameReady = m.ready === true; updateStatus();
@@ -268,7 +274,7 @@
       else if (m.type === 'SC_SENT') post(m);
       else if (m.type === 'SC_ERROR') toast(m.key || 'sendError');
     };
-    bridge.start(); frame.contentWindow.postMessage({ source: 'SAKURA_SIDECHAT_PANEL', type: 'SC_CONNECT', bridgeID: id }, 'https://chatgpt.com', [channel.port2]); tellFrame();
+    bridge.start(); frame.contentWindow.postMessage({ source: 'SAKURA_SIDECHAT_PANEL', type: 'SC_CONNECT', bridgeID: id }, 'https://chatgpt.com', [channel.port2]); tellFrame(); agent.sync();
   });
   function updateStatus() {
     let key = !connected ? 'reconnect' : !frameReady ? 'waiting' : state?.status === 'paused' ? 'paused' : state?.status === 'access-needed' ? 'access' : state?.status === 'restricted' ? 'restricted' : state?.context?.page ? 'ready' : 'selectHint';

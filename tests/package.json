@@ -2,7 +2,7 @@
   "name": "gpt-tracker-regression-tests",
   "private": true,
   "scripts": {
-    "test": "node --test pro-plans.test.cjs core.test.cjs reset.test.cjs refresh.test.cjs prediction.test.cjs prediction-worker.test.cjs page-worker.test.cjs page-reference-worker.test.cjs",
+    "test": "node --test pro-plans.test.cjs core.test.cjs reset.test.cjs refresh.test.cjs prediction.test.cjs prediction-worker.test.cjs page-worker.test.cjs page-reference-worker.test.cjs agent.test.cjs agent-worker.test.cjs",
     "browser": "node browser.cjs",
     "readability": "node readability.cjs",
     "themes": "node themes.cjs",
@@ -10,7 +10,8 @@
     "controls": "node controls.cjs",
     "update-browser": "node update-browser.cjs",
     "reference-send": "node reference-send-browser.cjs",
-    "page-capture": "node page-capture-browser.cjs"
+    "page-capture": "node page-capture-browser.cjs",
+    "agent": "node --test agent.test.cjs agent-worker.test.cjs && node agent-browser.cjs && node agent-transport-browser.cjs"
   },
   "devDependencies": {
     "playwright": "1.62.1"

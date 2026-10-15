@@ -118,3 +118,27 @@ SHA-256：`92D5C13274E9D4F81BEEF39759C9CF6D24FBF1BC69649613F90C553C8147E7FA`
 ## SakuraMeter 品牌集成验证
 
 通过 40 项单元测试、14 组 DOM/网络场景、37 组 UI 流程、84 张矩阵截图、42 组主题/状态检查。另验证 12 组中英/深浅/Popup/桌面/窄屏标题与图标排版、4 个 PNG 尺寸及 2 套 Manifest 文案。0 外部请求、0 页面错误。未安装扩展或请求模型。后台、发送统计核心和权限不变。
+
+
+## 3.7.0.1 local Agent beta — 2026-10-15
+
+Based on origin/main 92add3c. No push, tag, release, store upload or publication.
+
+- 94 Node tests passed (including 11 new protocol/loop/worker tests).
+- 3 Python release-package tests passed.
+- agent-browser.cjs passed JSON and XML native-composer -> fill -> click -> observe -> done flows on local fixtures, mode restore, saved settings, small viewport, XML parsing and stale/sensitive action guards.
+- agent-transport-browser.cjs passed stream-pause rejection, completed-turn gating, duplicate suppression, stop-before-send, draft preservation and conversation-navigation cancellation.
+- Existing reference-send-browser.cjs and sidechat-visual-browser.cjs passed.
+- These use local fixtures and simulated Chrome APIs/model replies. No authenticated ChatGPT model run, loaded-extension user profile acceptance, or arbitrary cross-site guarantee is claimed.
+
+The beta uses fixed DOM actions, not CDP/trusted input. Frames, closed shadow roots, uploads, password fields and links that require opening another tab are outside the first version. Some sites reject synthetic events; the model receives actual follow-up observations and must report failures. The model reply must be complete, match the selected schema and correlate to the active request before any action.
+
+
+## 3.7.0.8 Agent Beta release validation — 2026-10-15
+
+- Signed-in Chrome: JSON task scrolled the authorized Bilibili tab down, returned a fresh observation, scrolled back up and ended with Finished / Completed. No manual source-page scrolling was used during the run.
+- The final domain restriction change allows ChatGPT and subdomains; its worker regression covers authorized starts on the main domain and two subdomains. The user also confirmed the updated local package works.
+- Local JSON/XML browser fixtures cover composer sending, modern/legacy ChatGPT messages, first-conversation routing, action execution and done. Transport regressions cover draft preservation, completion gating and cancellation.
+- Historical local-beta results above describe earlier checkpoints. Live verification remains limited to the stated task; arbitrary sites, iframe controls and trusted-input-only actions are not claimed.
+
+Release checks: 96 core/Agent Node tests, 45 store-publishing tests and 3 Python package tests passed.

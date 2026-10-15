@@ -202,3 +202,4 @@ async function handle(m){
 // Optional Side Chat module. Usage remains available if its initialization fails.
 try { importScripts('sidechat/core.js', 'sidechat/worker.js'); } catch (error) { console.warn('[SakuraMeter Side Chat] initialization failed', error); }
 importScripts('reset-notifications-core.js','reset-notifications-worker.js');
+importScripts('sidechat/agent-protocol.js','sidechat/agent-worker.js');
