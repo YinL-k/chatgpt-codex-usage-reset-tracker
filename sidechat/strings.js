@@ -67,7 +67,7 @@
   });
   Object.assign(en,{captureNote:'Active only while this panel is open. Reads rendered page text, not passwords or form input values. Selection is the explicit target.',pageReferenceLabel:'Page reference',deduplicatePageLabel:'Deduplicate page',pageReferenceNote:'Keep referencing this page until you turn it off. Selection stays independent.',deduplicatePageNote:'Reuse unchanged page context. Changes refresh the reference for your next message.',freshnessError:'The latest page snapshot could not be read. Your draft is kept; try sending again.',quoteNote:'Page stays referenced until you close it. Unchanged content may reuse the previous reference. Selection is the explicit target.'});
   Object.assign(zh,{captureNote:'仅在侧边栏打开时读取已渲染网页内容，不读取密码或表单输入值。Selection 始终是明确目标。',pageReferenceLabel:'Page reference',deduplicatePageLabel:'Deduplicate page',pageReferenceNote:'开启时持续引用当前网页；关闭不影响 Selection。',deduplicatePageNote:'省略重复页面内容；页面变化会更新引用，在下一条消息中附带。',freshnessError:'未能读取最新网页快照，草稿已保留，请重试发送。',quoteNote:'网页会持续引用，直到你关闭它。未变化的内容可沿用已发送引用；Selection 始终是明确目标。'});
-  Object.assign(en,{sendSelection:'Send selection',selectionPrompt:'Explain the selected text.'});
-  Object.assign(zh,{sendSelection:'发送选区',selectionPrompt:'解释我选中的内容。'});
+  Object.assign(en,{sendSelection:'Send selection',selectionPrompt:'Explain the selected text.',selectionBusy:'Wait for the current response to finish before sending a selection.',selectionWaiting:'Waiting for ChatGPT to allow sending…',selectionSendTimeout:'ChatGPT did not enable sending in time. Your prepared draft is still here; send it manually when available.'});
+  Object.assign(zh,{sendSelection:'发送选区',selectionPrompt:'解释我选中的内容。',selectionBusy:'当前回答尚未结束，请完成或停止生成后再发送选区。',selectionWaiting:'等待 ChatGPT 恢复发送…',selectionSendTimeout:'ChatGPT 的发送按钮仍不可用，已保留草稿；按钮恢复后可手动发送。'});
   globalThis.SakuraSideStrings = { en, zh };
 })();
