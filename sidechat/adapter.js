@@ -267,9 +267,15 @@
   const post=m=>{try{port?.postMessage(m);}catch{}};
   function composer(){return document.querySelector('[data-composer-body] [contenteditable="true"][data-composer-markdown],#prompt-textarea[contenteditable="true"],textarea#prompt-textarea')||document.querySelector('form textarea,form [contenteditable="true"],[data-testid*="composer"] [contenteditable="true"]');}
   function read(el){return el?(typeof el.value==='string'?el.value:el.innerText||el.textContent||''):'';}
+  const SEND_SELECTOR='[data-testid="send-button"],button[data-testid*="send-button"],button[aria-label="Send prompt"],button[aria-label="Send message"],button[aria-label="Send"],button[aria-label="\u53d1\u9001\u6d88\u606f"],button[aria-label="\u53d1\u9001\u63d0\u793a"]';
   function sendButton(el=composer()){
-    const q='[data-testid="send-button"],button[data-testid*="send-button"],button[aria-label="Send prompt"],button[aria-label="Send message"],button[aria-label="Send"],button[aria-label="\u53d1\u9001\u6d88\u606f"],button[aria-label="\u53d1\u9001\u63d0\u793a"]';
-    return el?.closest('[data-composer-body],form')?.querySelector(q)||document.querySelector(q);
+    return el?.closest('[data-composer-body],form')?.querySelector(SEND_SELECTOR)||document.querySelector(SEND_SELECTOR);
+  }
+  function readyNativeSendButton(el=composer()){
+    // During transitions ChatGPT can temporarily keep hidden/disabled Send nodes.
+    // Only click a visibly enabled Send belonging to this exact composer.
+    const root=el?.closest('[data-composer-body],form')||document;
+    return [...root.querySelectorAll(SEND_SELECTOR)].find(button=>!disabled(button)&&!!visibleRect(button))||null;
   }
   function modelLabel(){
     const clean=raw=>K.clean(raw,90).replace(/[\s\u00a0]+/g,' ').replace(/[›⌄▾\s]+$/g,'').trim();
@@ -441,8 +447,8 @@
       if(nativeIsGenerating(el)){
         cancelQuickSend();post({type:'SC_ERROR',key:'selectionBusy'});return;
       }
-      const button=sendButton(el);
-      if(button&&!disabled(button)&&visibleRect(button)){
+      const button=readyNativeSendButton(el);
+      if(button){
         cancelQuickSend();
         // The normal click listener still runs freshness checks, attaches the
         // existing Page/Selection references and tracks actual message delivery.
