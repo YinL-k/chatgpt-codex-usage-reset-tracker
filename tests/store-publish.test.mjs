@@ -5,7 +5,7 @@ import { mkdtemp, writeFile, rm, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { enabled, configuration, assertion, client, chrome, edge, operation, poll, run } from '../.github/scripts/store-publish.mjs';
+import { enabled, configuration, assertion, client, chrome, edge, operation, edgeFailure, poll, run } from '../.github/scripts/store-publish.mjs';
 
 const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
 const credential = JSON.stringify({ type: 'service_account', client_email: 'test@example.invalid', private_key: privateKey.export({ type: 'pkcs8', format: 'pem' }) });
@@ -216,4 +216,30 @@ test('Edge operation polling accepts JSON HTTP 202 without treating it as succes
   const failed = sequence([accepted(), new Response(JSON.stringify({id: op, status:'Failed'}), {status:202})]);
   await assert.rejects(edge(edgeConfig, zip, version, failed.request, polling));
   assert.equal(failed.calls.length, 2);
+});
+
+test('Edge failure diagnostics classify known codes without exposing credentials', () => {
+  const result = edgeFailure('Edge submission status', {
+    status: 'Failed', errorCode: 'InProgressSubmission',
+    errors: ['Previous submission under review'],
+  }, edgeConfig);
+  assert.match(result, /InProgressSubmission/);
+  assert.match(result, /Previous submission under review/);
+  assert.match(result, /do not retry yet/);
+  const masked = edgeFailure('Edge submission status', {
+    status: 'Failed', errorCode: 'SubmissionValidationError',
+    errors: ['secret-sentinel invalid'],
+  }, edgeConfig);
+  assert.doesNotMatch(masked, /secret-sentinel/);
+  assert.match(masked, /\[redacted\]/);
+  assert.doesNotMatch(edgeFailure('Edge status', {
+    status: 'Failed', errorCode: 'secret-sentinel', errors: null,
+  }, edgeConfig), /secret-sentinel/);
+});
+test('Edge operation identifiers are emitted only after successful POST responses', async () => {
+  const ids = [];
+  const completed = json({ id: op, status: 'Succeeded' });
+  const mock = sequence([accepted(), completed, accepted(), json({ id: op, status: 'Failed', errorCode: 'InProgressSubmission' })]);
+  await assert.rejects(edge(edgeConfig, zip, version, mock.request, polling, (stage, id) => ids.push([stage, id])), /InProgressSubmission/);
+  assert.deepEqual(ids, [['upload', op], ['submission', op]]);
 });
