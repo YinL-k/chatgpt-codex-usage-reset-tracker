@@ -157,3 +157,8 @@ Release checks: 96 core/Agent Node tests, 45 store-publishing tests and 3 Python
 - Status is fixed above the native composer without reducing the iframe height. Geometry is reported through the existing authenticated frame bridge; values are checked and mapped into panel coordinates.
 - JSON/XML browser regressions passed with geometry checks at 420px and 320px, including a taller composer. Agent transport and Chat reference browser regressions passed.
 - Floating-layout checks use local fixtures; the real signed-in sending acceptance above remains evidence for the unchanged Chat send repair.
+
+
+## 3.7.0.11 corrected top-floating Agent status
+
+Status is anchored eight pixels below the observed Side Chat logo, with space bounded by the composer. JSON/XML browser checks passed at 320px and 420px and with a taller input. Agent transport and package-version checks passed. Chrome review withdrawal has four separate credential-free tests for exact-version matching, no-op states, empty POST, and verification after cancellation.

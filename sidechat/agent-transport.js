@@ -128,9 +128,9 @@ html[data-sakura-sidechat-theme="light"] .sakura-agent-popover{background:linear
       const el=h.composer(),surface=el?.closest('[data-composer-surface-variant],form,[data-composer-body]')||el;
       const box=surface?.getBoundingClientRect();
       if(!box||box.height<=0)return;
-      const composerTop=Math.round(Math.max(0,Math.min(innerHeight,box.top))),key=composerTop+':'+innerHeight;
+      const composerTop=Math.round(Math.max(0,Math.min(innerHeight,box.top))),headerBottom=Math.round(Math.max(48,document.getElementById('sakura-sidechat-native-bar')?.getBoundingClientRect().bottom||56)),key=headerBottom+':'+composerTop+':'+innerHeight;
       if(key===layoutLast)return;layoutLast=key;
-      h.post({type:'SC_AGENT_LAYOUT',composerTop,viewportHeight:innerHeight});
+      h.post({type:'SC_AGENT_LAYOUT',headerBottom,composerTop,viewportHeight:innerHeight});
     }
     function tick() {
       renderMode();layout();
