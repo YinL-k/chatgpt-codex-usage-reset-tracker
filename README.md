@@ -1,56 +1,114 @@
-[English](README_en.md) | 中文
+**中文** | [English](README_en.md)
 
-# SakuraMeter — ChatGPT & Codex Usage Tracker
+<div align="center">
 
-![SakuraMeter](assets/sakurameter-128.png)
+<img src="assets/sakurameter-128.png" width="88" alt="SakuraMeter icon" />
 
-**3.6.0.66**
+# SakuraMeter — ChatGPT Usage Tracker & Codex Reset Monitor
 
-在浏览器本地记录 ChatGPT 活动，查看热力图、使用趋势和 Codex 额度。保留 Sakura 玻璃风格，提供樱花粉浅色和深色主题、中英文界面。
+**ChatGPT 使用热力图 · Codex 额度与重置时间 · 全球 Reset 预测与提醒 · Side Chat**
 
-## 产品预览
+*Track ChatGPT activity, Codex usage limits, reset times, and experimental global reset forecasts.*
 
-<img src="https://raw.githubusercontent.com/YinL-k/chatgpt-codex-usage-reset-tracker/main/store-assets/en/preview/large-promotional.jpg?v=3a031125" alt="SakuraMeter promotional banner" />
+[![Latest release](https://img.shields.io/github/v/release/YinL-k/chatgpt-codex-usage-reset-tracker?label=Latest%20Release)](https://github.com/YinL-k/chatgpt-codex-usage-reset-tracker/releases/latest)
+[![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-Install-4285F4?logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/hnajkeiigdkgafcobbkchpcdafddfpki)
+[![Chrome 116+](https://img.shields.io/badge/Chrome-116%2B-666)](manifest.json)
 
-下面展示 6 张英文版商店截图。
+**[从 Chrome Web Store 安装](https://chromewebstore.google.com/detail/hnajkeiigdkgafcobbkchpcdafddfpki)** · **[下载最新版本](https://github.com/YinL-k/chatgpt-codex-usage-reset-tracker/releases/latest)** · **[报告问题 / 建议功能](https://github.com/YinL-k/chatgpt-codex-usage-reset-tracker/issues)**
 
-<table>
-<tr><td width="50%"><img src="https://raw.githubusercontent.com/YinL-k/chatgpt-codex-usage-reset-tracker/main/store-assets/en/preview/01-popup-dark.jpg?v=3a031125" alt="Popup dark" /></td><td width="50%"><img src="https://raw.githubusercontent.com/YinL-k/chatgpt-codex-usage-reset-tracker/main/store-assets/en/preview/02-popup-light.jpg?v=3a031125" alt="Popup light" /></td></tr>
-<tr><td width="50%"><img src="https://raw.githubusercontent.com/YinL-k/chatgpt-codex-usage-reset-tracker/main/store-assets/en/preview/03-overview-dark.jpg?v=3a031125" alt="Overview dark" /></td><td width="50%"><img src="https://raw.githubusercontent.com/YinL-k/chatgpt-codex-usage-reset-tracker/main/store-assets/en/preview/04-overview-light.jpg?v=3a031125" alt="Overview light" /></td></tr>
-<tr><td width="50%"><img src="https://raw.githubusercontent.com/YinL-k/chatgpt-codex-usage-reset-tracker/main/store-assets/en/preview/05-activity-dark.jpg?v=3a031125" alt="Activity dark" /></td><td width="50%"><img src="https://raw.githubusercontent.com/YinL-k/chatgpt-codex-usage-reset-tracker/main/store-assets/en/preview/06-activity-light.jpg?v=3a031125" alt="Activity light" /></td></tr>
-</table>
+</div>
 
-## 本版功能
+> **不必频繁打开用量页面。** SakuraMeter 在浏览器中汇总 ChatGPT 活动、Codex 额度窗口与重置时间，并展示实验性的全球 Codex Reset 预测。使用已有的 ChatGPT 登录会话，无需另填 API Key。
+>
+> **注意：** 全球 Reset 预测来自第三方公共数据，**不是** OpenAI 官方重置时间、不是你的个人额度倒计时，扩展也**不能触发 Reset**。
 
-- **发送确认**：点击、Enter 或表单提交只记录发送意图，匹配到新用户消息后才计数；排除空输入、失败发送、重复事件和历史回放。
-- **Overview / Activity / Usage**：活动趋势、全年热力图、月周柱状图、时段分布、个人用量和校准。三张统计卡片等高，周记录较多时仅图表内部横向滚动。
-- **一致的主题与控件**：主题切换保持尺寸、滚动、输入和展开状态；统一会员栏、Live 标签、下拉菜单、整框可点击的日期时间选择和操作按钮，支持键盘与 reduced-motion。
-- **只读额度刷新**：读取已有 ChatGPT 登录会话与 usage，动态显示 Codex 窗口时长；失败保留缓存，不自动重载聊天页，不提交聊天或调用模型。
-- **Codex Reset**：读取 codex-reset.com 公开全局重置预测。属于实验性第三方预测，不是个人额度重置或官方保证。
-- **重置预测通知**：后台按固定周期检查公开预测；`alarms` 用于调度后台检查，`notifications` 用于在满足所选阈值时显示浏览器/系统通知。可在 Usage → Advanced 中关闭通知，或选择 Standard / Low sensitivity。
-- **Side Chat**：可选的侧边聊天体验，直接使用现有 ChatGPT 登录会话。面板打开且网站已授权时，可读取当前页面的可见正文，并可将你主动高亮的文本作为重点上下文加入下一条消息。可随时暂停页面上下文或撤销站点权限；不新增开发者后端、遥测或模型代理。
+## 它能帮你做什么？
 
-## 安装与升级
+| 你关心的问题 | SakuraMeter 提供什么 |
+| --- | --- |
+| **Codex 还剩多少？什么时候恢复？** | 在 Usage 中查看账户可用的 Codex 用量百分比、额度窗口和服务端返回的个人重置时间。数据缺失时显示不可用，不编造额度。 |
+| **最近会不会有全球 Codex Reset？** | 在 Overview 查看 [Codex Reset](https://codex-reset.com/) 的最近确认记录及未来 **24/48 小时**实验性概率；另提供 [LunarWerx](https://codex.lunarwerx.com/) 的 **6/24 小时**预测和阈值提醒。 |
+| **我在 ChatGPT 上用了多少？** | 本地记录已确认的消息发送，查看每日趋势、全年热力图、周/月统计、活跃时段，支持活动数据导入/导出。 |
+| **浏览网页时能直接问 ChatGPT 吗？** | 可选 **Side Chat** 侧边栏：引用当前网页、划词聚焦、预览/移除引用，或在输入框为空时主动点击按钮发送选区。 |
+| **Pro 额度显示不完整怎么办？** | 对可获取的服务端额度与周期信息直接展示；不足时保留本地观测，支持在 Advanced 中人工校准，估算会明确标注。 |
 
-下载此仓库 ZIP 并解压，打开 `chrome://extensions`，开启开发者模式，点击“加载已解压的扩展程序”，选择包含 `manifest.json` 的仓库目录。安装后正常刷新一次 ChatGPT 页面，使消息统计脚本生效。
+适合需要规划 Codex 工作时间的开发者、想回顾 ChatGPT 使用习惯的高频用户，以及希望边阅读边提问的学生和研究者。
 
-升级前先导出活动备份并备份原源码目录。要保留同一扩展 ID 下的历史、手动计划和校准，请更新原加载路径的文件，再在扩展管理页重新加载；不要先卸载旧扩展。活动导出仅含日期统计，不包含计划或校准。另选路径可能生成不同扩展 ID。
+## Codex Reset：先区分两件事
 
-## 数据、权限与网络
+| | 个人额度窗口重置 | 全球 Reset 预测与通知 |
+| --- | --- | --- |
+| **是什么** | 你的 ChatGPT/Codex 账户在对应用量窗口内的额度恢复时间 | 对公开报道的、不定期全球性额度重置事件作出的第三方预测 |
+| **数据依据** | 已登录 ChatGPT 会话返回的用量字段 | codex-reset.com 的 **24/48h** 展望；LunarWerx 的 **6/24h** 预测与确认事件数据 |
+| **可信边界** | 仅在服务端返回时显示；接口可能变化 | 概率、历史与信号均不构成官方承诺；并不预测某个账户一定何时恢复 |
+| **在哪里看** | Dashboard → **Usage** | Dashboard → **Overview**；预测提醒设置在 **Usage → Advanced** |
 
-统计在本地保存，不保存聊天正文、密码或认证令牌；发送确认短暂在内存比较文本，过期即丢弃。保留历史日期键、`__gptUsageV4`、schema 3、手动计划与校准；活动导出格式 version 5，appVersion 3.6.0.66。
+**Reset 通知怎么工作？** 浏览器后台定期读取公开预测；当预测达到所选阈值并持续满足条件时，可显示系统通知。可选择 **Standard / Low sensitivity**，也可以完全关闭。它提醒的是**预测信号**，不是已确认发生的 Reset；不会因每条确认事件就自动推送一次。
 
-当前必需权限为 `storage`、`tabs`、`sidePanel`、`scripting`、`declarativeNetRequestWithHostAccess`、`alarms`、`notifications`，以及 `https://chatgpt.com/*` 主机权限。Side Chat 对其他网站的访问属于**可选权限**：只有在你授权当前网站或全部网站后，才会读取该页面的可见正文用于本地上下文；可以随时暂停或撤销权限。`sidePanel` 用于 Side Chat 面板，`scripting` 用于在已授权页面运行本地上下文脚本，`declarativeNetRequestWithHostAccess` 仅在 Side Chat 面板打开期间处理 ChatGPT 子框架所需的响应头规则；`alarms` 用于在后台按计划检查重置预测，`notifications` 用于在满足通知条件时显示浏览器/系统通知。个人额度使用 GET `/api/auth/session` 和 `/backend-api/wham/usage`，令牌仅用于请求内存。公开预测使用不携带账户信息的 GET；第三方会收到 IP 等普通连接元数据。无开发者后台、遥测、自动模型调用或模型代理。详见 [隐私说明](PRIVACY.md)。
+数据来源：[Codex Reset](https://codex-reset.com/) · [LunarWerx](https://codex.lunarwerx.com/)（彼此独立，均为第三方；与个人用量数据分开）。
 
-未知额度不补造数值；Pro 余额在手动校准后为本地估算。私有 API 和页面结构可能变化。当前自动化使用本地合成夹具，未将其视为真实登录账户或扩展安装验收。
+## 快速安装
 
-## 验证
+**推荐：Chrome Web Store。** 点击上方安装链接即可安装；浏览器商店审核可能晚于 GitHub 版本，请以商店展示的版本号为准。
 
-在 `tests` 目录执行 `npm install`，再执行 `npm test`。浏览器测试需要安装 Google Chrome（脚本使用 Playwright 的 chrome channel）：`npm run browser`、`npm run themes`、`npm run readability`、`npm run controls`。测试使用本地夹具，不消耗模型额度。
+**手动安装最新版（Chrome / 支持兼容扩展 API 的 Chromium 浏览器）：**
 
-历史自动化验证基线见 [3.5.0 验证报告](verification/3.5.0/report.json)。3.6.0.62 已通过 71/71 Node 单元及后台集成测试，并通过 Page/Selection、Popup/Dashboard 与 iframe 发送适配器等专项浏览器回归；同时完成版本号、JavaScript/JSON 语法、资源引用与扩展包结构检查。这些浏览器测试使用本地页面、夹具与 `chrome.*` 模拟，不能替代真人验收：真实登录 ChatGPT 会话和实际浏览器/操作系统通知展示仍未完成真人验证。[TESTING.md](TESTING.md) 保留历史开发与验证记录。
+1. 从 [GitHub Releases](https://github.com/YinL-k/chatgpt-codex-usage-reset-tracker/releases/latest) 下载 `SakuraMeter-<version>.zip`，解压。
+2. Chrome 打开 `chrome://extensions`；Microsoft Edge 打开 `edge://extensions`，开启**开发者模式**。
+3. 选择**加载已解压的扩展程序 / Load unpacked**，指向解压后包含 `manifest.json` 的文件夹。
+4. 打开并登录 [ChatGPT](https://chatgpt.com/)，刷新已有的 ChatGPT 标签页，然后点击扩展图标。
 
+**开始使用：** 点击扩展图标看 Popup；进入 Dashboard 的 **Overview / Activity / Usage**；在 **Usage → Advanced** 调整 Reset 通知。要用 Side Chat，可按 `Alt + Shift + C` 或从扩展入口打开，并按需授权当前网站的页面引用。
 
-## 品牌与图标
+**已有手动安装的用户：** 先备份原扩展目录并导出活动数据，随后在原加载路径替换文件、点击“重新加载”。**不要先卸载**；改用另一加载路径可能生成新扩展 ID，导致原本的本地记录和设置无法自动继承。活动 JSON 导出不包含人工计划或校准值。更多说明见 [中文安装指南](INSTALL-中文.md)。
 
-采用确认的 01「含苞」图标，应用于扩展、工具栏、Popup 与 Dashboard，支持深浅主题。中英文扩展名称包含 ChatGPT / Codex 用量关键词。详见 [品牌资源](BRANDING.md)。本项目为独立社区扩展。
+## 界面预览
+
+<div align="center">
+<img src="https://raw.githubusercontent.com/YinL-k/chatgpt-codex-usage-reset-tracker/main/store-assets/en/preview/large-promotional.jpg?v=3a031125" alt="SakuraMeter product preview" width="820" />
+</div>
+
+<details>
+<summary><strong>展开查看 6 张界面截图（深色 / 浅色）</strong></summary>
+
+| Popup | Popup |
+| :---: | :---: |
+| <img src="store-assets/en/preview/01-popup-dark.jpg" alt="Popup dark theme" width="390" /> | <img src="store-assets/en/preview/02-popup-light.jpg" alt="Popup light theme" width="390" /> |
+| Overview | Overview |
+| <img src="store-assets/en/preview/03-overview-dark.jpg" alt="Overview dark theme" width="390" /> | <img src="store-assets/en/preview/04-overview-light.jpg" alt="Overview light theme" width="390" /> |
+| Activity | Activity |
+| <img src="store-assets/en/preview/05-activity-dark.jpg" alt="Activity dark theme" width="390" /> | <img src="store-assets/en/preview/06-activity-light.jpg" alt="Activity light theme" width="390" /> |
+
+</details>
+
+截图可能滞后于最新版本，功能以对应 Release 和扩展实际页面为准。
+
+## 隐私与使用边界
+
+- **本地优先：** 使用活动与趋势保存在浏览器本地；消息内容不会写入用量历史或活动导出。发送确认会在内存中短暂比较消息文本。
+- **只读用量查询：** 借助已有的 ChatGPT 登录会话读取可用的额度信息；不需要 API Key，也不会为了刷新额度调用模型或发送新消息。
+- **第三方公开预测：** 会向预测服务发送不携带 ChatGPT 认证信息的 GET 请求；服务提供方仍可能看到 IP 等普通连接元数据。
+- **可选网页引用：** 只有启用 Side Chat 并授权网站时才读取可见正文或主动高亮的文本。你主动发送引用后，它会成为正常的 ChatGPT 消息，受你的 ChatGPT 服务与账户设置约束。
+- **透明权限：** `alarms` 和 `notifications` 用于 Reset 预测检查及提醒；`sidePanel`、`scripting` 和相关主机权限支持 Side Chat。其他网站访问权限为可选。
+
+没有开发者自建的聊天中转服务器或遥测服务。完整权限范围及潜在风险请阅读 [隐私说明](PRIVACY.md)。
+
+## 常见问题
+
+**Reset 预测和个人 Codex 重置时间为什么不一样？** 一个是第三方对全球不定期事件的展望，一个是你的账户在当前额度窗口中的服务端时间，两者不能互相替代。
+
+**为什么有些百分比显示“—”或“Unavailable”？** 你可能尚未登录 ChatGPT、暂时无法读取数据，或当前账户/服务端没有提供对应字段。SakuraMeter 不会将未知数值猜成准确额度。
+
+**装上扩展会自动替我问 ChatGPT 吗？** 不会。普通用量统计不发起模型请求；Side Chat 只有在你明确发送消息或点击“发送选区”时才提交内容。
+
+**这个项目是 OpenAI 官方的吗？** 不是。SakuraMeter 是独立的社区项目，不隶属于 OpenAI，也未获官方背书。
+
+## 反馈、贡献与兼容性
+
+遇到问题或想提新功能？请在 [GitHub Issues](https://github.com/YinL-k/chatgpt-codex-usage-reset-tracker/issues) 反馈，附上**浏览器版本、扩展版本、复现步骤、预期/实际结果**。请勿上传 Cookie、令牌、私人聊天或含敏感信息的截图。
+
+- **兼容性：** 以 Chrome 116+ 为扩展声明的最低版本；其他 Chromium 浏览器需要自行验证，网页结构或私有用量接口变化也可能影响可用性。
+- **验证说明：** 历史版本的自动化报告见 [TESTING.md](TESTING.md)。v3.6.0.66 的 Side Chat 改动已完成代码审查和静态语法检查，但真实登录浏览器的端到端验收仍待完成，不能将其表述为完整验证通过。
+- **版本记录：** [Releases](https://github.com/YinL-k/chatgpt-codex-usage-reset-tracker/releases) · [Release notes](RELEASE.md) · [品牌资源](BRANDING.md)
+
+**SakuraMeter 希望让 ChatGPT 与 Codex 的用量信息更清楚、更好找。** 欢迎反馈真实使用中不方便的地方；让工具对下一位用户更有用。
