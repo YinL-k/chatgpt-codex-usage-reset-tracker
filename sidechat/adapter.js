@@ -394,7 +394,7 @@
   }
   function sendSelectionOnly(){
     const el=composer(),button=sendButton(el);
-    if(!port||!el||read(el).trim()||!K.validSelection(context?.selection)||disabled(button)||pendingSend||pendingDelivery)return;
+    if(!port||!el||read(el).trim()||!K.validSelection(context?.selection)||(button&&disabled(button))||pendingSend||pendingDelivery)return;
     const question=t('selectionPrompt');
     try{
       writing=true;setText(el,question);
