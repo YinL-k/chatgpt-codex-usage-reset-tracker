@@ -104,7 +104,7 @@ async function run(){
   await update('MODERN_PAGE','Never going to use the CLI but loved the vid nonetheless.');
   const entered=await modernSend('还有这个',true);assert.ok(entered.includes('<Selection>\nNever going'));assert.ok(entered.includes('PageReference: active; unchanged'));
   await update('MODERN_PAGE','Selection alone');await frame.locator('.remove-page').click();const alone=await modernSend('这个');assert.ok(alone.includes('<Selection>\nSelection alone'));assert.ok(!alone.includes('<PageContext>'));
-  // Selection can be sent from an empty composer, including while only a voice button is visible.
+  // Basic selection-only send through an enabled mock Send button. Native Voice/Stop/gray-disabled transitions still need manual browser verification.
   await update('MODERN_PAGE','Quick selection without typing');
   await frame.locator('[data-composer-markdown]').fill('');
   const quickBefore=await frame.evaluate(()=>submits.length);
