@@ -1,0 +1,12 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { generateKeyPairSync } from 'node:crypto';
+import { cancelSubmission } from '../.github/scripts/chrome-cancel-submission.mjs';
+const {privateKey}=generateKeyPairSync('rsa',{modulusLength:2048});
+const config={CHROME_PUBLISHER_ID:'publisher',CHROME_EXTENSION_ID:'a'.repeat(32),CHROME_SERVICE_ACCOUNT_JSON:JSON.stringify({type:'service_account',client_email:'fixture@example.com',private_key:privateKey.export({type:'pkcs8',format:'pem'})})};
+const status=(version='3.7.0.8',state='PENDING_REVIEW')=>({name:'publishers/publisher/items/'+config.CHROME_EXTENSION_ID,itemId:config.CHROME_EXTENSION_ID,submittedItemRevisionStatus:{state,distributionChannels:[{crxVersion:version}]}});
+function fixture(first,after=status('3.7.0.8','CANCELLED')){let reads=0;const calls=[];return {calls,request:async(label,url,options={},expected,json)=>{calls.push({label,url,options,expected,json});if(label==='Chrome authentication')return {access_token:'fixture-token',token_type:'Bearer'};if(label==='Chrome review status')return reads++ ? after : first;return {};}};}
+test('cancels only exact authorized review with empty POST and verifies state',async()=>{const f=fixture(status());assert.match(await cancelSubmission(config,'3.7.0.8',f.request),/verified/);const call=f.calls.find(c=>c.label==='Chrome cancel submission');assert.equal(call.options.method,'POST');assert.equal(call.options.body,undefined);assert.equal(call.json,false);assert.equal(f.calls.filter(c=>c.label==='Chrome review status').length,2);});
+test('different version, state, missing version or identity never cancels',async()=>{for(const s of [status('3.6.0.65'),status('3.7.0.8','PUBLISHED'),{...status(),itemId:'wrong'},{...status(),submittedItemRevisionStatus:{state:'PENDING_REVIEW'}}]){const f=fixture(s);await assert.rejects(cancelSubmission(config,'3.7.0.8',f.request));assert(!f.calls.some(c=>c.label==='Chrome cancel submission'));}});
+test('absent or cancelled submission does not repeat a withdrawal',async()=>{for(const s of [{...status(),submittedItemRevisionStatus:undefined},status('3.7.0.8','CANCELLED')]){const f=fixture(s);assert.match(await cancelSubmission(config,'3.7.0.8',f.request),/No active/);assert(!f.calls.some(c=>c.label==='Chrome cancel submission'));}});
+test('accepted cancellation still pending is not reported as complete',async()=>{const f=fixture(status(),status());await assert.rejects(cancelSubmission(config,'3.7.0.8',f.request,async()=>{}),/still processing/);});

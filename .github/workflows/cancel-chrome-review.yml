@@ -1,0 +1,30 @@
+name: Cancel explicitly authorized Chrome review
+on:
+  workflow_dispatch:
+    inputs:
+      expected_version:
+        description: Exact pending version explicitly authorized for withdrawal
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: sakurameter-store-release
+  cancel-in-progress: false
+jobs:
+  cancel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check exact pending version, cancel, and verify
+        env:
+          EXPECTED_VERSION: ${{ inputs.expected_version }}
+          CHROME_STORE_PUBLISH_ENABLED: ${{ vars.CHROME_STORE_PUBLISH_ENABLED }}
+          CHROME_PUBLISHER_ID: ${{ vars.CHROME_PUBLISHER_ID }}
+          CHROME_EXTENSION_ID: ${{ vars.CHROME_EXTENSION_ID }}
+          CHROME_SERVICE_ACCOUNT_JSON: ${{ secrets.CHROME_SERVICE_ACCOUNT_JSON }}
+        run: node .github/scripts/chrome-cancel-submission.mjs
