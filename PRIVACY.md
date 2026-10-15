@@ -1,4 +1,4 @@
-# SakuraMeter 3.6.0.62 - Privacy and behavior
+# SakuraMeter — Privacy and behavior (v3.6.0.66)
 
 Side Chat is optional and separate from the existing local usage tracker. There is no added developer backend, telemetry or model proxy.
 
@@ -12,7 +12,7 @@ Context stays in extension RAM/chrome.storage.session and is not added to usage 
 
 ## Sending and local display
 
-The user's native Enter or send click may include the prepared excerpt and highlight in the ChatGPT draft. The extension does not call a private chat-generation API or automatically resend messages. Existing ChatGPT session cookies are used by the embedded website. Submitted references are ordinary ChatGPT message text, not OpenAI-native browser attachments; account/service settings apply to that submitted data.
+The user's native Enter/send click, or an explicit one-click Send selection action while the composer is empty, may include a prepared page excerpt and highlight in the ChatGPT draft. The explicit quick-send action waits for the native Send control to become available; selecting text alone never triggers a model request. The extension does not call a private chat-generation API or automatically resend messages. Existing ChatGPT session cookies are used by the embedded website. Submitted references are ordinary ChatGPT message text, not OpenAI-native browser attachments; account/service settings apply to that submitted data.
 
 Pending receipts and submitted text are kept briefly in the frame for local confirmation/presentation and are not persisted as extension chat history. Receipts expire without blocking later sends. Exact selection-version checks prevent a late acknowledgment from removing a newer highlight. An observed UI message is local evidence, not a server delivery guarantee.
 
@@ -24,13 +24,19 @@ The required permissions are: storage, tabs, sidePanel, scripting, declarativeNe
 
 While at least one Side Chat panel is open, an existing session rule removes frame-blocking response headers from chatgpt.com sub-frame responses. It is scoped by destination and resource type, NOT by a single iframe initiator: other matching ChatGPT embeds can be affected while the panel is open. It does not alter top-level pages or unrelated domains. The rule is removed when the last panel closes. This scope remains unchanged.
 
+## Third-party Codex reset forecasts
+
+The public Overview forecast reads codex-reset.com using unauthenticated GET requests (24/48-hour global outlook and last confirmed global reset). A separate background predictor reads LunarWerx (codex.lunarwerx.com, 6/24-hour outlook) and codex-reset.com public confirmed-event data to manage forecast-notification cycles. Forecast values, event history and alert thresholds are **not** official OpenAI account data, promises or personal reset schedules. The background notification policy never triggers a model request or resets an account.
+
+These forecast calls do not intentionally include ChatGPT cookies or bearer tokens; the third-party providers can still see ordinary network metadata such as IP address. Personal Codex quota windows are retrieved separately through the user's existing ChatGPT session. Disabling forecast notifications stops the alert checks from resulting in notifications; other visible forecast surfaces may still issue public read-only GET requests when opened.
+
 ## Usage
 
 The existing usage core and export schema are unchanged. Usage events contain only a SHA-256-derived event identifier, timestamp and observed model/tier/effort metadata; no source text or reference is placed in the event. SakuraMeter now treats the actual outgoing ChatGPT user-message request ID as the primary counting signal. DOM/rendered-message receipts remain a fallback and use the same deterministic event ID, so the two paths deduplicate instead of double-counting. Missing request IDs do not prevent sending; the DOM fallback may still count the send when a stable rendered identity is available. The original read-only account-usage refresh and public reset forecast behavior remain unchanged.
 
 ## Test boundary
 
-Automated verification for 3.6.0.62 includes 71/71 Node unit/background-integration tests and dedicated browser regressions using local pages, fixtures, and simulated Chrome APIs. No real account was used by those tests and no real user/model message was sent. Real logged-in ChatGPT session behavior and actual browser/operating-system notification display still require human acceptance and have not been claimed as verified.
+Automated verification for 3.6.0.62 includes 71/71 Node unit/background-integration tests and dedicated browser regressions using local pages, fixtures, and simulated Chrome APIs. Those historical test results do not automatically apply to every later version. The v3.6.0.66 Side Chat quick-send/menu changes received static code inspection, but have not completed authenticated-browser end-to-end acceptance. Real logged-in ChatGPT behavior and actual browser/operating-system notification display still require human validation.
 
 ## Context serialization
 
