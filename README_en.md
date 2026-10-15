@@ -93,6 +93,8 @@ There is no developer-operated chat relay or telemetry backend. Read the [full p
 
 **Why do some meters say “—” or “Unavailable”?** You might not be signed in, the request might have failed, or the service may not expose that value for your account. SakuraMeter does not turn missing data into a guessed quota.
 
+**Does the heatmap include chats from my phone or other computers?** No. Activity tracking counts confirmed sends observed in this browser, not your complete cross-device conversation history.
+
 **Does SakuraMeter automatically send prompts to ChatGPT?** No. Tracking and read-only refreshes do not invoke models. Optional Side Chat sends only when you explicitly submit a message or click its send-selection action.
 
 **Is this an official OpenAI extension?** No. SakuraMeter is an independent community project, not affiliated with or endorsed by OpenAI.
