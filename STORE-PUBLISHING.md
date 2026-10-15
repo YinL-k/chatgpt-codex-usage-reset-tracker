@@ -1,12 +1,12 @@
 # SakuraMeter store publishing
 
-Release from `main`: update `manifest.json.version`, commit/push, then create the matching `v<version>` tag. `version_name` is display text; updating it is optional and it is not the release gate. A mismatched tag fails before building or contacting any store.
+Release from `main`: update `manifest.json.version` and push that change. The manifest version bump now triggers the existing build-once GitHub Release and Chrome/Edge submission workflow, creating the matching `v<version>` release tag automatically. The original explicit `v<version>` tag push trigger remains supported. `version_name` is display text (synchronize it for consistency). A mismatched tag fails before building or contacting any store; an already-existing release tag blocks the version-bump path to prevent accidental republishing.
 
-The tag workflow builds **one production ZIP**, uploads it once as an Actions artifact, verifies its SHA-256 and root manifest before creating the GitHub Release, then submits that same artifact to Chrome and Edge. Both store jobs wait for the GitHub Release and run independently (`fail-fast: false`). No staging workflow, automatic version changes, or tag creation is included.
+The tag workflow builds **one production ZIP**, uploads it once as an Actions artifact, verifies its SHA-256 and root manifest before creating the GitHub Release, then submits that same artifact to Chrome and Edge. Both store jobs wait for the GitHub Release and run independently (`fail-fast: false`). No staging workflow or automatic version-number changes are included. For the main-version-bump path, the GitHub Release action creates a matching tag at the exact release commit.
 
 ## Repository settings
 
-Paste values into [Actions Secrets](https://github.com/YinL-k/chatgpt-codex-usage-tracker/settings/secrets/actions) and [Actions Variables](https://github.com/YinL-k/chatgpt-codex-usage-tracker/settings/variables/actions). These are **repository** settings, not environment settings.
+Paste values into [Actions Secrets](https://github.com/YinL-k/chatgpt-codex-usage-reset-tracker/settings/secrets/actions) and [Actions Variables](https://github.com/YinL-k/chatgpt-codex-usage-reset-tracker/settings/variables/actions). These are **repository** settings, not environment settings.
 
 | Type | Name | Value / source |
 | --- | --- | --- |
@@ -55,9 +55,9 @@ Verified against official documentation and Chrome's live Discovery schema on **
 
 ## Routine release and recovery
 
-1. Change `manifest.json.version` and push the release-ready code to `main`.
-2. Create/push the exactly matching tag, e.g. `v3.6.0.63`. This is an example only; this change does not create any tag or republish `v3.6.0.62`.
-3. Observe [Actions](https://github.com/YinL-k/chatgpt-codex-usage-tracker/actions). Version components must satisfy Chrome's numeric format (one to four components, 0..65535, no leading zeros, not all zero).
+1. Commit the fully prepared release code and version labels to `main`.
+2. Bump `manifest.json.version` and `version_name` in the final push to `main` to trigger packaging, release-tag creation, and store submissions. Alternatively, push an explicit matching `v<version>` tag (existing trigger).
+3. Observe [Actions](https://github.com/YinL-k/chatgpt-codex-usage-reset-tracker/actions). Version components must satisfy Chrome's numeric format (one to four components, 0..65535, no leading zeros, not all zero).
 4. The GitHub Release appears first; enabled stores then submit updates. Submission acceptance is **not** review approval or public availability.
 
 The workflow has repository-wide release concurrency, with cancellation disabled for the running release, because each store has one mutable draft. Wait for the active release to finish before pushing another release tag; do not queue a batch of tags. Do not manually change the store draft while a release is running.
@@ -82,7 +82,7 @@ Live OAuth exchange, publisher access, Edge API-key validity and actual review s
 
 ## Account configuration verified on 2026-10-07
 
-Both YinL-k/chatgpt-codex-usage-tracker and YinL-k/Pixiv-Bookmark-Random use the same publisher service account and Edge Publish API account, with separate extension/product ID variables. The account credentials can manage all extensions belonging to the publisher; repository variables select the intended item. Two Secrets and six Variables are required in each repository. No Google Cloud project roles were granted.
+Both YinL-k/chatgpt-codex-usage-reset-tracker and YinL-k/Pixiv-Bookmark-Random use the same publisher service account and Edge Publish API account, with separate extension/product ID variables. The account credentials can manage all extensions belonging to the publisher; repository variables select the intended item. Two Secrets and six Variables are required in each repository. No Google Cloud project roles were granted.
 
 Chrome OAuth authentication and read-only fetchStatus succeeded for both items. Actual upload/review submission was not run. Edge credentials were generated and stored using GitHub secret encryption; no live Edge submission was attempted. The current Edge key expires on 2026-12-18: rotate it in Partner Center before expiry and update EDGE_API_KEY in both repositories. Store listing/privacy changes remain manual.
 
