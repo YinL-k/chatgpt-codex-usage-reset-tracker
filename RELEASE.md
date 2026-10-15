@@ -1,3 +1,11 @@
+# SakuraMeter 3.6.0.66
+
+- Side Chat: add an explicit one-click **Send selection** button when text is highlighted and the composer is empty. The action uses the existing native ChatGPT send path and reference safeguards.
+- Respect ChatGPT's native Voice, Stop, Send, and temporarily disabled Send states. Wait at most ten seconds for Send to become available; cancel on draft, selection or route changes and preserve the unsent draft on timeout.
+- Simplify the center Side Chat toolbar by removing duplicated `SakuraMeter /` text. Close extension popovers on clicks outside the menu or Escape inside the embedded chat.
+- Synchronize displayed version labels and renamed repository references. Packaging and store submission continue through the existing build-once GitHub Actions pipeline.
+- Important: static code inspection was completed. Synthetic browser/regression tests and live authenticated ChatGPT acceptance for this change were deferred at user request; store review or approval is separate from submission.
+
 # SakuraMeter 3.6.0.63
 
 - Publish the completed 3.6.0.62 feature set through the verified tag-driven Chrome and Edge release pipeline.
