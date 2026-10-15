@@ -269,7 +269,13 @@
   function read(el){return el?(typeof el.value==='string'?el.value:el.innerText||el.textContent||''):'';}
   const SEND_SELECTOR='[data-testid="send-button"],button[data-testid*="send-button"],button[aria-label="Send prompt"],button[aria-label="Send message"],button[aria-label="Send"],button[aria-label="\u53d1\u9001\u6d88\u606f"],button[aria-label="\u53d1\u9001\u63d0\u793a"]';
   function sendButton(el=composer()){
-    return el?.closest('[data-composer-body],form')?.querySelector(SEND_SELECTOR)||document.querySelector(SEND_SELECTOR);
+    const root=el?.closest('[data-composer-body],form')||document;
+    const candidates=[...root.querySelectorAll(SEND_SELECTOR)];
+    // Use the same visible control for the original event interception and
+    // for the later delivery click; a hidden stale Send node is not authoritative.
+    return candidates.find(button=>!disabled(button)&&!!visibleRect(button))||
+      candidates.find(button=>!!visibleRect(button))||candidates[0]||
+      (root===document?null:document.querySelector(SEND_SELECTOR));
   }
   function readyNativeSendButton(el=composer()){
     // During transitions ChatGPT can temporarily keep hidden/disabled Send nodes.
