@@ -1,8 +1,6 @@
 [中文](README.md) | **English**
 
-<div align="center">
-
-<img src="assets/sakurameter-128.png" width="88" alt="SakuraMeter icon" />
+<p align="center"><img src="assets/sakurameter-128.png" width="88" alt="SakuraMeter icon" /></p>
 
 # SakuraMeter — ChatGPT Usage Tracker & Codex Reset Monitor
 
@@ -13,8 +11,6 @@
 [![Chrome 116+](https://img.shields.io/badge/Chrome-116%2B-666)](manifest.json)
 
 **[Install from Chrome Web Store](https://chromewebstore.google.com/detail/hnajkeiigdkgafcobbkchpcdafddfpki)** · **[Download the latest release](https://github.com/YinL-k/chatgpt-codex-usage-reset-tracker/releases/latest)** · **[Report a bug / Request a feature](https://github.com/YinL-k/chatgpt-codex-usage-reset-tracker/issues)**
-
-</div>
 
 > **See your ChatGPT and Codex usage without digging through account pages.** SakuraMeter combines locally recorded ChatGPT activity, available Codex usage windows and reset timestamps, and experimental third-party forecasts of global Codex resets. It uses your existing signed-in ChatGPT session; no API key is required.
 >
