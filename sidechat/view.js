@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const svg = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 5H3v6h4V5Zm10 0h-4v6h4V5ZM7 11c0 3-2 4-4 4m14-4c0 3-2 4-4 4"/></svg>';
-  function create({composer,translate,onClear,onDismiss,onRestore,onSendSelection}) {
+  function create({composer,translate,onClear,onDismiss,onRestore,onSendSelection,selectionSendStatus}) {
     let host=null,shadow=null,previewOpen=false, current=null, lastKey='',currentTheme='dark',dismissed=false;
     const folds=new WeakMap(),foldList=[];
     function mount() {
@@ -19,7 +19,8 @@
         svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.7;flex:none}.label{white-space:nowrap;font-weight:500}
         .remove{width:25px;height:26px;padding:5px;border-left:1px solid var(--line);font-size:15px;line-height:1}
         .send-selection{display:inline-flex;align-items:center;gap:5px;min-height:26px;padding:4px 9px;white-space:nowrap;border-left:1px solid var(--line);font-weight:650}
-        .send-selection .arrow{font-size:14px;line-height:1}.send-selection:hover{background:rgba(215,139,175,.15)}
+        .send-selection .arrow{font-size:14px;line-height:1}.send-selection:hover:not(:disabled){background:rgba(215,139,175,.15)}
+        .send-selection:disabled{opacity:.45;cursor:not-allowed}
         button:hover{background:rgba(215,139,175,.09)}
         .preview{margin-top:5px;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--bg);max-height:240px;overflow:auto;scrollbar-width:thin}
         .source{font-size:10px;color:var(--muted);word-break:break-all;margin-bottom:8px}.preview pre{margin:0;white-space:pre-wrap;word-break:break-word;font:11px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}
@@ -49,7 +50,8 @@
       dismissed=paused;current=item;currentTheme=theme;const hasEditor=mount();
       const editor=composer(),draft=editor?(typeof editor.value==='string'?editor.value:editor.innerText||editor.textContent||''):'';
       const page=SakuraSideCore.validPage(item?.page),selection=SakuraSideCore.validSelection(item?.selection);
-      const key=JSON.stringify([item?.id,item?.page?.fingerprint,item?.selection?.id,item?.selection?.capturedAt,theme,paused,previewOpen,translate('shortPage'),translate('sendSelection'),hasEditor,selection,!!draft.trim()]);
+      const sendState=typeof selectionSendStatus==='function'?selectionSendStatus():'unavailable';
+      const key=JSON.stringify([item?.id,item?.page?.fingerprint,item?.selection?.id,item?.selection?.capturedAt,theme,paused,previewOpen,translate('shortPage'),translate('sendSelection'),hasEditor,selection,!!draft.trim(),sendState]);
       if(lastKey===key)return;lastKey=key;
       host.hidden=(!page&&!selection&&!paused)||!hasEditor;host.dataset.theme=theme;
       shadow.querySelector('.row').hidden=!page&&!selection;
@@ -60,7 +62,10 @@
       const chip=shadow.querySelector('.chip');chip.title=translate('preview');chip.setAttribute('aria-expanded',String(previewOpen));
       const remove=shadow.querySelector('.remove');remove.hidden=!selection;remove.title=translate('remove');remove.setAttribute('aria-label',translate('remove'));
       const send=shadow.querySelector('.send-selection');send.hidden=!selection||!!draft.trim()||typeof onSendSelection!=='function';
-      send.querySelector('.send-label').textContent=translate('sendSelection');send.title=translate('sendSelection');send.setAttribute('aria-label',translate('sendSelection'));
+      send.disabled=sendState!=='ready';
+      send.querySelector('.send-label').textContent=translate('sendSelection');
+      send.title=translate(sendState==='generating'?'selectionBusy':sendState==='pending'?'selectionWaiting':'sendSelection');
+      send.setAttribute('aria-label',translate('sendSelection'));
       shadow.querySelector('.preview').hidden=!previewOpen;
       // Keep pending page text out of the document until the user opens this preview.
       shadow.querySelector('pre').textContent=previewOpen ? (selection? '[Highlight]\n'+item.selection.text+'\n\n':'')+(page?item.page.text:'') : '';
