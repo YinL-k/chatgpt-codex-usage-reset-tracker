@@ -9,10 +9,10 @@
   let dismissedSource='',captureSource='',pageDismissed=false,deduplicatePage=true,pendingSend=null,pendingDelivery=null,replaying=false,delivering=false,ledgerEpoch=0;
   const pageLedger=new Map();
   let port=null,context=null,labels={},theme='dark',captureStatus='',prepared={},statusLast='',lastAnnounce=0;
-  let queued=0,writing=false,editorLast=null,rawRoute=location.pathname,route=chatID()||'draft:'+crypto.randomUUID();
+  let queued=0,writing=false,editorLast=null,rawRoute=location.pathname,route=chatID()||'draft:'+crypto.randomUUID(),quickSend=null;
   let lastPrepared='',disposed=false,observer=null,recentRequest=null;
   const receipts=[],knownNodes=new WeakSet(),knownIDs=new Set();
-  const provisionalTTL=8000,receiptTTL=60000;
+  const provisionalTTL=8000,receiptTTL=60000,quickSendTimeout=10000;
   const NATIVE_STYLE_ID='sakura-sidechat-native-style',NATIVE_BAR_ID='sakura-sidechat-native-bar',NATIVE_BRAND_ID='sakura-native-brand-svg';
   function hideNativeModeSwitch(){
     const controls=[...document.querySelectorAll('button,[role="button"],[role="tab"]')]
@@ -233,11 +233,15 @@
     `;
     (document.head||document.documentElement).appendChild(style);return style;
   }
+  // The menu lives in the parent extension page. Pointer events inside this
+  // cross-origin frame never bubble there, so explicitly relay click-away.
+  // Do not dismiss for the two menu triggers: their own click toggles the menu.
   document.addEventListener('pointerdown',e=>{
     const target=e.target;
-    if(target instanceof Element&&target.closest('#'+NATIVE_BAR_ID))return;
-    try{window.parent.postMessage({source:'SAKURA_SIDECHAT_FRAME',type:'SC_UI_ACTION',action:'dismiss-popovers'},origin);}catch{}
+    if(target instanceof Element&&target.closest('#'+NATIVE_BAR_ID+' button[data-sm-action="more"],#'+NATIVE_BAR_ID+' button[data-sm-action="status"]'))return;
+    nativeAction('dismiss-popovers');
   },true);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')nativeAction('dismiss-popovers');},true);
   function nativeAction(action){
     try{window.parent.postMessage({source:'SAKURA_SIDECHAT_FRAME',type:'SC_UI_ACTION',action},origin);}catch{}
   }
@@ -305,7 +309,26 @@
     for(let i=receipts.length-1;i>=0;i--){const r=receipts[i];if(!r.counted&&d.at>=r.at-250&&d.at-r.at<7000){r.request=snap;break;}}
   }
   window.addEventListener('message',observeRequestMessage,false);
-  const disabled=b=>!b||b.disabled||b.getAttribute('aria-disabled')==='true';
+  const disabled=b=>!b||b.disabled||b.getAttribute('aria-disabled')==='true'||!!b.closest('[inert]');
+  // Unlike Send, Stop/Voice must never be activated by the quick-send flow.
+  function nativeIsGenerating(el=composer()){
+    const root=el?.closest('[data-composer-body],form')||document;
+    const selector='button[data-testid="stop-button"],button[data-testid*="stop-generating" i],button[aria-label="Stop generating"],button[aria-label="Stop streaming"],button[aria-label="Stop response"],button[aria-label="停止生成"],button[aria-label="停止回答"]';
+    return [...root.querySelectorAll(selector)].some(button=>!!visibleRect(button));
+  }
+  function selectionSendStatus(){
+    if(!port||disposed||!composer()||!K.validSelection(context?.selection))return 'unavailable';
+    if(quickSend||pendingSend||pendingDelivery)return 'pending';
+    return nativeIsGenerating()?'generating':'ready';
+  }
+  function cancelQuickSend(){
+    const pending=quickSend;
+    if(!pending)return;
+    quickSend=null;
+    clearTimeout(pending.timer);
+    cancelAnimationFrame(pending.frame);
+    schedule();
+  }
   const messageID=n=>{
     if(!(n instanceof Element))return '';
     const direct=n.getAttribute('data-message-id')||n.getAttribute('data-message-uuid');if(direct)return direct;
@@ -353,6 +376,7 @@
   }
   function clearPageLedger(){pageLedger.clear();ledgerEpoch++;}
   function cancelPending(){
+    cancelQuickSend();
     if(pendingSend){clearTimeout(pendingSend.timer);pendingSend=null;}
     if(pendingDelivery){const r=pendingDelivery;pendingDelivery=null;clearTimeout(r.timer);cancelAnimationFrame(r.frame);
       if(r.editor===composer()&&norm(read(r.editor))===r.expectedNorm){try{writing=true;setText(r.editor,r.question);}catch{}finally{writing=false;}}
@@ -393,21 +417,50 @@
     post({type:'SC_ENSURE_PAGE',requestId:id,pageIdentity:captureSource});
   }
   function sendSelectionOnly(){
-    const el=composer(),button=sendButton(el);
-    if(!port||!el||read(el).trim()||!K.validSelection(context?.selection)||(button&&disabled(button))||pendingSend||pendingDelivery)return;
+    const el=composer();
+    if(selectionSendStatus()!=='ready'||!el||read(el).trim())return;
     const question=t('selectionPrompt');
-    try{
-      writing=true;setText(el,question);
-    }catch{
-      post({type:'SC_ERROR',key:'sendError'});return;
-    }finally{writing=false;}
-    // Allow the native editor's state to commit before its ordinary send path.
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{
-      if(disposed||el!==composer()||norm(read(el))!==norm(question))return;
-      const native=sendButton(el);if(!disabled(native))native.click();
-    }));
+    // Preserve the precise selected passage that the user chose to send.
+    const request={editor:el,question,route,contextId:context.id,selectionKey:K.selectionKey(context),
+      deadline:Date.now()+quickSendTimeout,timer:0,frame:0};
+    try{writing=true;setText(el,question);}
+    catch{post({type:'SC_ERROR',key:'sendError'});return;}
+    finally{writing=false;}
+    quickSend=request;
+    function attempt(){
+      if(quickSend!==request)return;
+      syncRoute();
+      // Never send after an edit, route switch, stale/removed selection, disconnect
+      // or a new generation. A canceled attempt leaves the user's draft intact.
+      if(disposed||!port||composer()!==el||route!==request.route||
+         norm(read(el))!==norm(request.question)||pendingSend||pendingDelivery||
+         !K.validContext(context)||context.id!==request.contextId||
+         !K.validSelection(context.selection)||K.selectionKey(context)!==request.selectionKey){
+        cancelQuickSend();return;
+      }
+      if(nativeIsGenerating(el)){
+        cancelQuickSend();post({type:'SC_ERROR',key:'selectionBusy'});return;
+      }
+      const button=sendButton(el);
+      if(button&&!disabled(button)&&visibleRect(button)){
+        cancelQuickSend();
+        // The normal click listener still runs freshness checks, attaches the
+        // existing Page/Selection references and tracks actual message delivery.
+        button.click();return;
+      }
+      if(Date.now()>=request.deadline){
+        cancelQuickSend();
+        post({type:'SC_ERROR',key:'selectionSendTimeout'});
+        return;
+      }
+      request.timer=setTimeout(attempt,120);
+    }
+    // Wait for React/ProseMirror to commit the new text, then watch the native
+    // Voice -> Send / disabled gray Send -> enabled Send transitions.
+    request.frame=requestAnimationFrame(()=>{if(quickSend===request)request.frame=requestAnimationFrame(attempt);});
+    schedule();
   }
-  const view=SakuraSideView.create({composer,translate:t,onSendSelection:sendSelectionOnly,onDismiss:()=>setPageReference(false),onRestore:()=>setPageReference(true),onClear:item=>{
+  const view=SakuraSideView.create({composer,translate:t,selectionSendStatus,onSendSelection:sendSelectionOnly,onDismiss:()=>setPageReference(false),onRestore:()=>setPageReference(true),onClear:item=>{
     cancelPending();
     post({type:'SC_CLEAR',id:item.id,selectionKey:K.selectionKey(item)});
     if(context?.id===item.id)context={...context,selection:null};rebuild();render();
@@ -422,6 +475,9 @@
     if(status!==statusLast){statusLast=status;post(JSON.parse(status));}
   }
   function handleSend(event){
+    // If the user sends manually before the queued quick-send is ready,
+    // abandon the queue to guarantee a single native submission.
+    if(quickSend)cancelQuickSend();
     if(writing||delivering||!port)return;
     if(pendingDelivery){event.preventDefault();event.stopImmediatePropagation();return;}
     const el=composer(),question=read(el);
@@ -563,7 +619,7 @@
     });
     observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['data-message-id','data-message-status']});
     document.addEventListener('input',e=>{
-      if(!writing){const el=composer();if(pendingSend&&(el===e.target||el?.contains(e.target)))pendingSend.cancelled=true;if(pendingDelivery&&(el===e.target||el?.contains(e.target))&&read(el)!==pendingDelivery.expected)cancelPending();if(el&&(el===e.target||el.contains(e.target)))for(const r of receipts)if(r.editor===el)r.consumed=true;}
+      if(!writing){const el=composer();if(quickSend&&(el===e.target||el?.contains(e.target)))cancelQuickSend();if(pendingSend&&(el===e.target||el?.contains(e.target)))pendingSend.cancelled=true;if(pendingDelivery&&(el===e.target||el?.contains(e.target))&&read(el)!==pendingDelivery.expected)cancelPending();if(el&&(el===e.target||el.contains(e.target)))for(const r of receipts)if(r.editor===el)r.consumed=true;}
       schedule();
     },true);
   }
