@@ -325,7 +325,7 @@
   // Unlike Send, Stop/Voice must never be activated by the quick-send flow.
   function nativeIsGenerating(el=composer()){
     const root=el?.closest('[data-composer-body],form')||document;
-    const selector='button[data-testid="stop-button"],button[data-testid*="stop-generating" i],button[aria-label="Stop generating"],button[aria-label="Stop streaming"],button[aria-label="Stop response"],button[aria-label="Stop"],button[aria-label="停止生成"],button[aria-label="停止回答"],button[aria-label="停止"]';
+    const selector='button[data-testid="stop-button"],button[data-testid*="stop-generating" i],button[data-testid*="stop-button" i],button[aria-label^="Stop " i],button[aria-label="Stop generating"],button[aria-label="Stop streaming"],button[aria-label="Stop response"],button[aria-label="Stop"],button[aria-label="停止生成"],button[aria-label="停止回答"],button[aria-label="停止"]';
     return [...root.querySelectorAll(selector)].some(button=>!!visibleRect(button));
   }
   function selectionSendStatus(){
@@ -638,7 +638,13 @@
   if(document.documentElement)observe();else document.addEventListener('DOMContentLoaded',observe,{once:true});
   if(document.body)ensureNativeBar();else document.addEventListener('DOMContentLoaded',ensureNativeBar,{once:true});
   window.addEventListener('resize',syncScrollbarBoundary);
-  const timer=setInterval(()=>{announce();if(receipts.length||editorLast!==composer()||rawRoute!==location.pathname){editorLast=composer();schedule();}},500);
+  let lastGenerationVisible=false;
+  const timer=setInterval(()=>{
+    announce();
+    const generating=!!K.validSelection(context?.selection)&&nativeIsGenerating();
+    if(generating!==lastGenerationVisible){lastGenerationVisible=generating;schedule();}
+    if(receipts.length||editorLast!==composer()||rawRoute!==location.pathname){editorLast=composer();schedule();}
+  },500);
   window.addEventListener('pagehide',()=>{disposed=true;cancelPending();clearPageLedger();clearInterval(timer);clearTimeout(queued);observer?.disconnect();scrollbarObserver?.disconnect();window.removeEventListener('resize',syncScrollbarBoundary);context=null;receipts.length=0;port?.close();});
   announce();
 })();
