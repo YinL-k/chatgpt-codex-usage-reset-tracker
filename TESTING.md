@@ -142,3 +142,11 @@ The beta uses fixed DOM actions, not CDP/trusted input. Frames, closed shadow ro
 - Historical local-beta results above describe earlier checkpoints. Live verification remains limited to the stated task; arbitrary sites, iframe controls and trusted-input-only actions are not claimed.
 
 Release checks: 96 core/Agent Node tests, 45 store-publishing tests and 3 Python package tests passed.
+
+
+## 3.7.0.9 Chat and Agent coexistence fix — 2026-10-15
+
+- Reproduced on the user's loaded 3.7.0.8 extension: Chat's pending fresh-page capture was cancelled by a passive SC_AGENT_ACTIVITY message, leaving the original draft unsent.
+- Browser regression now loads agent-transport.js alongside the ordinary Chat adapter, and sends activity, idle cancel and Chat-mode synchronization messages during capture and native delivery. The former code times out on the first send; the corrected code passes existing click, Enter, Page/Selection, deduplication and draft-preservation checks.
+- Real signed-in Chrome: click sent the existing greeting and received a normal reply; Enter sent a second task and received CHAT_ENTER_OK. Switching Agent then Chat and sending was also checked.
+- 96 Node tests and the JSON/XML Agent and transport browser regressions passed.

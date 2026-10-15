@@ -618,7 +618,11 @@
     port?.close();port=e.ports[0];
     port.onmessage=event=>{
       const m=event.data;
-      if(m && agent?.receive(m)){if(m.type!=='SC_AGENT_PRESENT'){cancelQuickSend();cancelPending();}return;}
+      // Only an Agent task taking ownership of the composer cancels Chat sends.
+      // Activity/status renders also arrive during fresh page capture; they must
+      // not discard a pending Chat snapshot or its native-submit continuation.
+      if(m && agent && (m.type==='SC_AGENT_SEND'||m.type==='SC_AGENT_MODE'&&m.enabled===true))cancelPending();
+      if(m && agent?.receive(m))return;
       if(m?.type==='SC_PAGE_SNAPSHOT_RESULT'){completeSnapshot(m);return;}
       if(m?.type==='SC_PAGE_REFERENCE'){setPageReference(m.value===true);return;}
       if(m?.type==='SC_FORGET_PAGE'){clearPageLedger();return;}

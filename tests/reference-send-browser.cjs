@@ -19,7 +19,7 @@ async function run(){
    window.addEventListener('message',e=>{
     if(e.origin!=='https://chatgpt.com'||e.data?.type!=='SC_READY')return;
     const channel=new MessageChannel();window.bridge=channel.port1;
-    bridge.onmessage=e=>{received.push(e.data);if(e.data.type==='SC_ENSURE_PAGE'&&!snapshotDrop){const req=e.data;setTimeout(()=>bridge.postMessage({type:'SC_PAGE_SNAPSHOT_RESULT',requestId:req.requestId,ok:!snapshotFails,pageIdentity:req.pageIdentity,context:latestState?.context}),snapshotDelay);}};bridge.start();
+    bridge.onmessage=e=>{received.push(e.data);if(e.data.type==='SC_ENSURE_PAGE'&&!snapshotDrop){const req=e.data;bridge.postMessage({type:'SC_AGENT_ACTIVITY',status:'Chat',events:[]});setTimeout(()=>{bridge.postMessage({type:'SC_PAGE_SNAPSHOT_RESULT',requestId:req.requestId,ok:!snapshotFails,pageIdentity:req.pageIdentity,context:latestState?.context});bridge.postMessage({type:'SC_AGENT_ACTIVITY',status:'Chat',events:[]});bridge.postMessage({type:'SC_AGENT_CANCEL'});bridge.postMessage({type:'SC_AGENT_MODE',enabled:false});},snapshotDelay);}};bridge.start();
     e.source.postMessage({source:'SAKURA_SIDECHAT_PANEL',type:'SC_CONNECT',bridgeID:e.data.bridgeID},e.origin,[channel.port2]);
    });
    const iframe=document.createElement('iframe');iframe.src='https://chatgpt.com/c/reference-test';iframe.width=800;iframe.height=600;document.body.append(iframe);
@@ -32,7 +32,7 @@ async function run(){
    window.submits=[];window.modelDraft='';document.querySelector('textarea').addEventListener('input',e=>{const value=e.target.value;queueMicrotask(()=>modelDraft=value);});document.querySelector('form').addEventListener('submit',e=>{e.preventDefault();submits.push(modelDraft);});
    const original=Element.prototype.attachShadow;Element.prototype.attachShadow=function(o){return original.call(this,{...o,mode:'open'});};
   },base);
-  for(const file of ['sidechat/core.js','model-resolver.js','sidechat/view.js','sidechat/adapter.js'])await frame.addScriptTag({path:path.join(root,file)});
+  for(const file of ['sidechat/core.js','model-resolver.js','sidechat/view.js','sidechat/agent-transport.js','sidechat/adapter.js'])await frame.addScriptTag({path:path.join(root,file)});
   await p.waitForFunction(()=>window.bridge&&received.some(m=>m.type==='SC_STATUS'));
   const update=async(pageText='PAGE_REFERENCE_BODY',selectionText=null,paused=false)=>{
    const state=await frame.evaluate(({pageText,selectionText,base})=>{
@@ -131,7 +131,7 @@ async function run(){
   assert.equal(await frame.locator('.thread-scroll-container').evaluate(e=>getComputedStyle(e).scrollbarWidth),'none');
   await frame.locator('.thread-scroll-container').evaluate(e=>e.scrollTop=e.scrollHeight);
   await p.screenshot({path:path.join(root,'tests/artifacts/sidebar-scrollbar-boundary.png')});
-  console.log('PASS: native model payload + current form-less ProseMirror click/Enter + Selection-only sends; Page ON semantics, default dedupe, latest snapshot before send, explicit Selection target with dedupe, Page OFF/restore, dedupe OFF/ON, read failures, repeated clicks and pending draft/close cancellation.');
+  console.log('PASS: Agent module loaded; activity updates, idle cancellation and Chat mode sync preserve pending Chat sends; native model payload + current form-less ProseMirror click/Enter + Selection-only sends; Page ON semantics, default dedupe, latest snapshot before send, explicit Selection target with dedupe, Page OFF/restore, dedupe OFF/ON, read failures, repeated clicks and pending draft/close cancellation.');
   await ctx.close();assert.deepEqual(report.errors,[]);
  }finally{await browser.close();server.close();}
 }
