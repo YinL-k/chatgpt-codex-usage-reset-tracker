@@ -233,6 +233,11 @@
     `;
     (document.head||document.documentElement).appendChild(style);return style;
   }
+  document.addEventListener('pointerdown',e=>{
+    const target=e.target;
+    if(target instanceof Element&&target.closest('#'+NATIVE_BAR_ID))return;
+    try{window.parent.postMessage({source:'SAKURA_SIDECHAT_FRAME',type:'SC_UI_ACTION',action:'dismiss-popovers'},origin);}catch{}
+  },true);
   function nativeAction(action){
     try{window.parent.postMessage({source:'SAKURA_SIDECHAT_FRAME',type:'SC_UI_ACTION',action},origin);}catch{}
   }
@@ -244,7 +249,7 @@
     if(!bar&&document.body){
       bar=document.createElement('div');bar.id=NATIVE_BAR_ID;bar.dataset.sakuraSidechat='native-bar';
       const icon=chrome.runtime.getURL('assets/sakurameter-32.png');
-      bar.innerHTML=`<img class="sm-mark" src="${icon}" alt=""><span class="sm-brand"><span class="sm-name">SakuraMeter</span><span class="sm-slash">/</span><span class="sm-context">Side Chat</span></span><span class="sm-actions"><button type="button" data-sm-action="status" aria-label="Side Chat status"><span class="sm-status-dot"></span></button><button type="button" data-sm-action="more" aria-label="SakuraMeter menu"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></span>`;
+      bar.innerHTML=`<img class="sm-mark" src="${icon}" alt=""><span class="sm-brand"><span class="sm-context">Side Chat</span></span><span class="sm-actions"><button type="button" data-sm-action="status" aria-label="Side Chat status"><span class="sm-status-dot"></span></button><button type="button" data-sm-action="more" aria-label="SakuraMeter menu"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></span>`;
       bar.addEventListener('click',e=>{const b=e.target instanceof Element?e.target.closest('button[data-sm-action]'):null;if(b)nativeAction(b.dataset.smAction);});
       document.body.appendChild(bar);
     }
@@ -387,7 +392,22 @@
     pendingSend=request;request.timer=setTimeout(()=>completeSnapshot({requestId:id,ok:false}),2000);
     post({type:'SC_ENSURE_PAGE',requestId:id,pageIdentity:captureSource});
   }
-  const view=SakuraSideView.create({composer,translate:t,onDismiss:()=>setPageReference(false),onRestore:()=>setPageReference(true),onClear:item=>{
+  function sendSelectionOnly(){
+    const el=composer(),button=sendButton(el);
+    if(!port||!el||read(el).trim()||!K.validSelection(context?.selection)||disabled(button)||pendingSend||pendingDelivery)return;
+    const question=t('selectionPrompt');
+    try{
+      writing=true;setText(el,question);
+    }catch{
+      post({type:'SC_ERROR',key:'sendError'});return;
+    }finally{writing=false;}
+    // Allow the native editor's state to commit before its ordinary send path.
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      if(disposed||el!==composer()||norm(read(el))!==norm(question))return;
+      const native=sendButton(el);if(!disabled(native))native.click();
+    }));
+  }
+  const view=SakuraSideView.create({composer,translate:t,onSendSelection:sendSelectionOnly,onDismiss:()=>setPageReference(false),onRestore:()=>setPageReference(true),onClear:item=>{
     cancelPending();
     post({type:'SC_CLEAR',id:item.id,selectionKey:K.selectionKey(item)});
     if(context?.id===item.id)context={...context,selection:null};rebuild();render();
