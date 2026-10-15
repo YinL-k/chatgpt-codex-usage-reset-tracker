@@ -33,7 +33,7 @@ Built for Codex developers planning coding sessions, frequent ChatGPT users expl
 | | Your personal quota window | Global reset outlook & alerts |
 | --- | --- | --- |
 | **What it is** | The reset time for a usage window on your account | Third-party forecasts of irregular, publicly reported global goodwill reset events |
-| **Source** | Account data reported through your signed-in ChatGPT session | codex-reset.com: **24/48h** outlook; LunarWerx: **6/24h** forecast and confirmed-event data |
+| **Source** | Account data reported through your signed-in ChatGPT session | codex-reset.com: **24/48h** outlook and confirmed-reset timeline; LunarWerx: **6/24h** forecast used for notifications |
 | **What it means** | Shown only when the service provides a timestamp; availability may change | Probabilistic, non-official signals; **not** a promise or a prediction of when your account will refill |
 | **Where to look** | Dashboard → **Usage** | Dashboard → **Overview**; alert controls under **Usage → Advanced** |
 
