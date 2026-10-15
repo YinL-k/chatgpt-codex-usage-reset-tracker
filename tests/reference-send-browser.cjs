@@ -111,8 +111,8 @@ async function run(){
   await frame.locator('.send-selection').click();
   await frame.waitForFunction(n=>submits.length===n+1,quickBefore);
   const quick=await frame.evaluate(()=>submits.at(-1));
-  assert.ok(quick.includes('<Selection>\\nQuick selection without typing'));
-  assert.ok(quick.includes('<UserRequest>\\nExplain the selected text.'));
+  assert.ok(quick.includes('<Selection>\nQuick selection without typing'));
+  assert.ok(quick.includes('<UserRequest>\nExplain the selected text.'));
   await frame.locator('[data-composer-markdown]').fill('');
   await frame.locator('[data-composer-markdown]').fill('do not submit while generating');await frame.locator('[aria-label=Send]').evaluate(b=>{b.hidden=true;b.disabled=true;});
   const stopped=await frame.evaluate(()=>submits.length);await frame.locator('[data-composer-markdown]').press('Enter');assert.equal(await frame.evaluate(()=>submits.length),stopped);
