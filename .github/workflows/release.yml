@@ -2,6 +2,12 @@ name: Release SakuraMeter
 
 on:
   push:
+    # Releases may be initiated by a version bump on main or by a matching tag.
+    # GitHub ignores path filters for tag pushes, so the old tag workflow remains.
+    branches:
+      - main
+    paths:
+      - "manifest.json"
     tags:
       - "v*"
 
@@ -24,9 +30,25 @@ jobs:
       sha256: ${{ steps.package.outputs.sha256 }}
     steps:
       - uses: actions/checkout@v4
-      - name: Validate tag and build ZIP once
+      - name: Validate release ref and build ZIP once
         id: package
-        run: python3 .github/scripts/release-package.py build --tag "$GITHUB_REF_NAME"
+        shell: bash
+        run: |
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            tag="$GITHUB_REF_NAME"
+          elif [ "$GITHUB_REF_TYPE" = "branch" ] && [ "$GITHUB_REF_NAME" = "main" ]; then
+            tag="v$(python3 -c 'import json;print(json.load(open("manifest.json",encoding="utf-8"))["version"])')"
+            # Fail closed: never overwrite an earlier GitHub Release/store version.
+            existing="$(git ls-remote --tags origin "refs/tags/$tag")"
+            if [ -n "$existing" ]; then
+              echo "::error::Release tag $tag already exists; increase manifest version first."
+              exit 1
+            fi
+          else
+            echo "::error::Unsupported release ref"
+            exit 1
+          fi
+          python3 .github/scripts/release-package.py build --tag "$tag"
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.package.outputs.artifact_name }}
@@ -54,6 +76,10 @@ jobs:
         run: python3 .github/scripts/release-package.py verify --zip "release/SakuraMeter-$VERSION.zip" --version "$VERSION" --sha256 "$SHA256"
       - uses: softprops/action-gh-release@v2
         with:
+          # On main version bumps the action creates the tag at this exact SHA.
+          # On tag pushes it publishes the existing, matching version tag.
+          tag_name: v${{ needs.build.outputs.version }}
+          target_commitish: ${{ github.sha }}
           generate_release_notes: true
           fail_on_unmatched_files: true
           files: release/SakuraMeter-${{ needs.build.outputs.version }}.zip
