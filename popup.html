@@ -21,6 +21,7 @@
 
 
 <link rel="stylesheet" href="prediction-ui.css">
+<link rel="stylesheet" href="frontend/popup-refine.css">
 </head>
 <body>
 <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
@@ -79,6 +80,7 @@
     <path id="usageTrendPath" class="trend-main-line" pathLength="1" d=""/>
     <g id="usageTrendDots"></g>
   </svg>
+  <p id="usageTrendEmpty" class="trend-main-empty" data-i18n="period_empty" hidden>No activity recorded in this period.</p>
   <div class="trend-main-foot">
     <span><span data-i18n="popup_today">Today</span> <strong id="usageTrendToday">0</strong></span>
     <span id="usageTrendDelta" class="trend-main-delta">—</span>

@@ -5,6 +5,7 @@
   "button_language": "语言",
   "button_export": "导出",
   "button_import": "导入",
+  "button_data": "数据",
   "popup_open_heatmap": "打开热力图",
   "stat_year_total": "年度总数",
   "stat_active_days": "活跃天数",
@@ -453,6 +454,8 @@
   "rn_days": "天",
   "rn_hours": "小时",
   "rn_minutes": "分钟",
+  "rn_on": "已开启",
+  "rn_off": "已关闭",
   "pro_allowance_pending": "额度待确认",
   "pro_observed_pending": "额度待确认 · 仅显示本地已记录的 Pro 使用量。",
   "pro_account_limits": "以账号实际返回的额度为准，不预设固定消息额度。"

@@ -1,0 +1,49 @@
+/* SakuraMeter dashboard refinement. Loaded last; presentation only.
+   Keeps the ink / sakura surfaces and only adjusts hierarchy, legibility and fit. */
+
+/* Header: the year only filters Activity, so it only appears there. */
+.container:has(.view-tabs:not([data-active="activity"])) .header-right .year-select-shell{display:none!important}
+
+/* Theme switch carries the same sun / moon marks as the popup. */
+.header-right .toggle{gap:7px!important}
+.header-right .theme-icon{width:15px;height:15px;flex:none;fill:none;stroke:currentColor;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;color:#7d767c;transition:color .2s ease}
+body.dark .header-right .theme-moon{color:var(--lux-pink,#f5b5c2)}
+body:not(.dark) .header-right .theme-icon{color:#b7a7ae}
+body:not(.dark) .header-right .theme-sun{color:#bd5879}
+
+/* Both skins keep a 1px utility rim so switching theme never shifts the header. */
+body:not(.dark) .header-right .secondary-button{border-width:1px!important;border-style:solid!important}
+
+/* Data menu: Export / Import share one utility button. */
+.header-right .data-menu-shell{position:relative;display:inline-flex}
+.header-right #dataMenuButton{display:inline-flex!important;align-items:center;gap:7px}
+.header-right .data-menu-shell.is-open .year-select-caret{transform:rotate(180deg)!important;color:#e2b1c4!important}
+.header-right .data-menu{position:absolute;z-index:1000;top:calc(100% + 6px);right:0;min-width:116px;padding:5px;border:1px solid rgba(194,184,190,.16);border-radius:11px;background:rgba(15,17,19,.96);box-shadow:0 14px 32px rgba(0,0,0,.30),inset 0 1px 0 rgba(255,255,255,.025);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.header-right .data-menu[hidden]{display:none}
+.header-right .data-menu-item{display:flex;align-items:center;width:100%;height:31px;padding:0 11px;border:0;border-radius:7px;background:transparent;color:#a9a1a6;font:500 12px/1 var(--lux-ui,Inter,system-ui,sans-serif);text-align:left;white-space:nowrap;cursor:pointer}
+.header-right .data-menu-item:is(:hover,:focus-visible){outline:0;color:#fff2f7;background:rgba(242,174,198,.09)}
+.header-right .data-menu-item:disabled{opacity:.5;cursor:default}
+body:not(.dark) .header-right .data-menu{background:rgba(255,252,253,.98);border-color:rgba(113,91,100,.15);box-shadow:0 14px 30px rgba(91,59,73,.14),inset 0 1px 0 #fff}
+body:not(.dark) .header-right .data-menu-item{color:#75646c}
+body:not(.dark) .header-right .data-menu-item:is(:hover,:focus-visible){color:#a84f6f;background:rgba(217,110,143,.07)}
+
+/* Legibility floor: secondary copy no longer drops below 11px. */
+body:has(>.container) .overview-panel-heading p{font-size:12px!important;line-height:1.45!important}
+body:has(>.container) .overview-period-pill{font-size:11px!important}
+body:has(>.container) .overview-jump button{font-size:12px!important}
+body:has(>.container) .version-label{font-size:11px!important}
+body:has(>.container) :is(.overview-freshness,#overviewUpdated){font-size:11px!important}
+
+/* Overview trend fills its row instead of leaving an empty band under the chart. */
+body:has(>.container) .overview-grid>.overview-panel:first-child{display:flex;flex-direction:column}
+body:has(>.container) .overview-grid .overview-chart-wrap{flex:1 1 auto;height:auto;min-height:205px}
+body:has(>.container) .overview-grid .overview-chart-wrap>canvas{position:absolute;inset:0}
+
+/* Time distribution: the ring supports the legend instead of dominating the page. */
+body:has(>.container) .time-distribution-chart-wrapper{width:min(300px,100%)!important}
+body:has(>.container) .time-distribution-layout{gap:24px 48px}
+body:has(>.container) .distribution-legend li[data-zero="true"]{opacity:.45}
+
+/* Usage: a stretched Pro cycle card keeps its meta line on the bottom edge. */
+body:has(>.container) .pro-detail .cycle-card{display:flex;flex-direction:column}
+body:has(>.container) .pro-detail .cycle-card>.cycle-meta{margin-top:auto;padding-top:14px}

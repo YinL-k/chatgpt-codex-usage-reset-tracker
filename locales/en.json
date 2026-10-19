@@ -5,6 +5,7 @@
   "button_language": "Language",
   "button_export": "Export",
   "button_import": "Import",
+  "button_data": "Data",
   "popup_open_heatmap": "Open Heatmap",
   "stat_year_total": "Year Total",
   "stat_active_days": "Active Days",
@@ -453,6 +454,8 @@
   "rn_days": "d",
   "rn_hours": "h",
   "rn_minutes": "m",
+  "rn_on": "On",
+  "rn_off": "Off",
   "pro_allowance_pending": "Allowance pending confirmation",
   "pro_observed_pending": "Allowance pending confirmation · locally recorded Pro sends only.",
   "pro_account_limits": "Uses your account’s reported allowance; no fixed message quota is assumed."

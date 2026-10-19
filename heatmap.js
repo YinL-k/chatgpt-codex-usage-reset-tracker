@@ -132,6 +132,7 @@ async function bootstrap() {
   initMonthsHeader();
   initThemeToggle();
   initExportImport();
+  initDataMenu();
   initModal();
   initDailyChartInteractions();
   initPieChart();
@@ -792,72 +793,43 @@ function renderDailyChart() {
     ctx.fillText(String(v), margin.left - 4, y);
   }
 
+  // Hourly buckets are discrete, so each hour is a bar centred in its slot.
+  const slot = plotWidth / 24;
+  const barWidth = Math.max(3, Math.min(18, slot * 0.62));
+
   // X-axis ticks: 0, 6, 12, 18, 23
   const tickHours = [0, 6, 12, 18, 23];
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
   tickHours.forEach((h) => {
-    const ratio = 23 > 0 ? h / 23 : 0.5;
-    const x = margin.left + ratio * plotWidth;
+    const x = margin.left + (h + 0.5) * slot;
     const label = `${String(h).padStart(2, "0")}:00`;
     ctx.fillStyle = axisColor;
     ctx.fillText(label, x, height - margin.bottom + 4);
   });
 
-  // Line
-  ctx.beginPath();
-  ctx.strokeStyle = lineColor;
-  ctx.lineWidth = 1.6;
-
+  const hoverIndex = hourlyChartState.hoverIndex;
   hours.forEach((count, hour) => {
-    const ratioX = 23 > 0 ? hour / 23 : 0.5;
-    const x = margin.left + ratioX * plotWidth;
+    const x = margin.left + (hour + 0.5) * slot;
     const y = margin.top + (1 - count / maxCount) * plotHeight;
 
     hourlyChartState.points[hour] = { hour, x, y, value: count };
+    const barHeight = height - margin.bottom - y;
+    if (count <= 0 || barHeight <= 0) return;
 
-    if (hour === 0) {
-      ctx.moveTo(x, y);
-    } else {
-      ctx.lineTo(x, y);
+    const radius = Math.min(5, barWidth / 2, barHeight);
+    ctx.save();
+    ctx.globalAlpha = hoverIndex === -1 || hoverIndex === hour ? 0.86 : 0.42;
+    if (hoverIndex === hour) {
+      ctx.shadowBlur = 14;
+      ctx.shadowColor = lineColor;
     }
-  });
-
-  ctx.stroke();
-
-  // Highlight point / vertical guide under hover
-  const hoverIndex = hourlyChartState.hoverIndex;
-  if (hoverIndex >= 0 && hourlyChartState.points[hoverIndex]) {
-    const pt = hourlyChartState.points[hoverIndex];
-
-    // vertical guide line
-    ctx.save();
-    ctx.setLineDash([4, 4]);
-    ctx.strokeStyle = lineColor + "66";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(pt.x, margin.top);
-    ctx.lineTo(pt.x, height - margin.bottom);
-    ctx.stroke();
-    ctx.restore();
-
-    // glow point
-    ctx.save();
-    ctx.shadowBlur = 14;
-    ctx.shadowColor = lineColor;
-    ctx.beginPath();
     ctx.fillStyle = lineColor;
-    ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
+    ctx.beginPath();
+    ctx.roundRect(x - barWidth / 2, y, barWidth, barHeight, [radius, radius, 2, 2]);
     ctx.fill();
     ctx.restore();
-
-    // outer ring
-    ctx.beginPath();
-    ctx.strokeStyle = lineColor + "88";
-    ctx.lineWidth = 2;
-    ctx.arc(pt.x, pt.y, 7, 0, Math.PI * 2);
-    ctx.stroke();
-  }
+  });
 }
 
 function handleDailyChartHover(event, tooltip) {
@@ -898,7 +870,7 @@ function handleDailyChartHover(event, tooltip) {
     }
   });
 
-  const stepX = 23 > 0 ? plotWidth / 23 : plotWidth;
+  const stepX = plotWidth / 24;
   const thresholdX = stepX * 0.6; 
 
   if (nearestIndex === -1 || minDx > thresholdX) {
@@ -1655,6 +1627,50 @@ function initExportImport() {
   });
 }
 
+/* Export / Import are occasional actions, so they share one header menu. */
+function initDataMenu() {
+  const button = document.getElementById("dataMenuButton");
+  const menu = document.getElementById("dataMenu");
+  if (!button || !menu) return;
+  const shell = button.closest(".data-menu-shell");
+  const items = () => Array.from(menu.querySelectorAll('[role="menuitem"]:not(:disabled)'));
+  function close({ returnFocus = false } = {}) {
+    if (menu.hidden) return;
+    menu.hidden = true;
+    shell.classList.remove("is-open");
+    button.setAttribute("aria-expanded", "false");
+    if (returnFocus) button.focus({ preventScroll: true });
+  }
+  function open(focusIndex = -1) {
+    closeYearSelectMenu();
+    menu.hidden = false;
+    shell.classList.add("is-open");
+    button.setAttribute("aria-expanded", "true");
+    if (focusIndex >= 0) items().at(focusIndex)?.focus();
+  }
+  button.addEventListener("click", () => (menu.hidden ? open() : close()));
+  button.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      open(e.key === "ArrowDown" ? 0 : items().length - 1);
+    } else if (e.key === "Escape") close();
+  });
+  menu.addEventListener("keydown", (e) => {
+    const list = items(), index = list.indexOf(document.activeElement);
+    let next;
+    if (e.key === "ArrowDown") next = (index + 1) % list.length;
+    else if (e.key === "ArrowUp") next = (index - 1 + list.length) % list.length;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = list.length - 1;
+    else if (e.key === "Escape" || e.key === "Tab") { if (e.key === "Escape") e.preventDefault(); close({ returnFocus: e.key === "Escape" }); return; }
+    if (next !== undefined) { e.preventDefault(); list[next].focus(); }
+  });
+  // Item handlers run first (registered in initExportImport); the menu then closes.
+  menu.addEventListener("click", (e) => { if (e.target.closest('[role="menuitem"]')) close({ returnFocus: true }); });
+  document.addEventListener("pointerdown", (e) => { if (!shell.contains(e.target)) close(); }, { capture: true });
+  window.addEventListener("blur", () => close());
+}
+
 /* ---------- Time distribution pie chart ---------- */
 
 function initPieChart() {
@@ -1698,7 +1714,7 @@ function updateTimeDistribution() {
       swatch.style.background=`var(--sakura-${i+1})`;swatch.setAttribute('aria-hidden','true');
       label.textContent=GPTTrackerI18n.t(TIME_BUCKETS[i].labelKey)+' · '+GPTTrackerI18n.t(TIME_BUCKETS[i].rangeKey);
       value.textContent=GPTTrackerI18n.t('distribution_count').replace('{n}',counts[i]).replace('{pct}',Math.round(counts[i]/total*100));
-      item.append(swatch,label,value);legend.append(item);
+      item.dataset.zero=String(counts[i]===0);item.append(swatch,label,value);legend.append(item);
     }
   }
   canvas.setAttribute('role','img');canvas.setAttribute('aria-label',GPTTrackerI18n.t('distribution_unit')+': '+total);

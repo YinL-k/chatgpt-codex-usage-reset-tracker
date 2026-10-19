@@ -28,7 +28,7 @@ async function run(){
   const p=await ctx.newPage();await setup(p,{lang:'en',theme,state:'data'});await p.setViewportSize({width:1280,height:900});await p.goto(base+'/heatmap.html');await p.waitForSelector('.reset-countdown');await p.waitForTimeout(500);
   assert.match(await p.locator('.reset-countdown').first().textContent(),/\d+d : \d+h : \d+m/);
   assert.equal(await p.locator('.reset-item .reset-countdown').count(),await p.locator('.reset-countdown').count());
-  const bounds=await p.locator('.reset-countdown').first().evaluate(e=>{const a=e.getBoundingClientRect(),b=e.closest('.reset-item').getBoundingClientRect();return a.left>=b.left&&a.right<=b.right&&a.top>=b.top&&a.bottom>b.bottom&&a.bottom-b.bottom<=12;});assert.ok(bounds,'countdown stays horizontally inside the card and fades just below its clipped bottom edge');
+  const bounds=await p.locator('.reset-countdown').first().evaluate(e=>{const a=e.getBoundingClientRect(),b=e.closest('.reset-item').getBoundingClientRect();return a.left>=b.left&&a.right<=b.right&&a.top>=b.top&&a.bottom<=b.bottom;});assert.ok(bounds,'countdown digits stay fully inside the card');
   for(const button of await p.locator('.header-right .secondary-button').all()){
    const before=await button.boundingBox();await button.hover();await p.waitForTimeout(250);const after=await button.boundingBox();assert.ok(Math.abs(before.width-after.width)<.1&&Math.abs(before.height-after.height)<.1,'utility hover preserves size');await p.mouse.move(0,0);
   }
@@ -45,7 +45,7 @@ async function run(){
   await p.goto(base+'/popup.html');await p.waitForFunction(()=>document.querySelector('#codexReset24')?.textContent==='25%');assert.equal(await p.locator('#codexReset6').textContent(),'3%');
   if(variant==='offline')assert.match(await p.locator('#codexResetForecastStatus').textContent(),/Cached/);
   await p.setViewportSize({width:420,height:800});await p.screenshot({path:path.join(out,`fixed-forecast-${variant}.png`)});
-  await p.goto(base+'/heatmap.html#overview');await p.waitForFunction(()=>document.querySelector('.rn-prediction-values')?.textContent.includes('25%'));assert.match(await p.locator('.rn-prediction-values').textContent(),/6h 3%.*24h 25%/);await p.locator('.rn-prediction').screenshot({path:path.join(out,`fixed-dashboard-forecast-${variant}.png`)});await p.close();
+  await p.goto(base+'/heatmap.html#overview');await p.waitForFunction(()=>document.querySelector('.rn-prediction-values')?.textContent.includes('25%'));assert.match(await p.locator('.rn-prediction-values').textContent(),/Next 6 hours 3%.*Next 24 hours 25%/);await p.locator('.rn-prediction').screenshot({path:path.join(out,`fixed-dashboard-forecast-${variant}.png`)});await p.close();
  }
  // Test the actual view and extractor in Chromium (open shadow only in fixture).
  const p=await ctx.newPage();await p.setViewportSize({width:560,height:420});await p.goto(base+'/fixture');await p.evaluate(()=>{const original=Element.prototype.attachShadow;Element.prototype.attachShadow=function(o){return original.call(this,{...o,mode:'open'});};});

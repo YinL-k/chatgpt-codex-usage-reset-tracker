@@ -13,6 +13,8 @@ function fmt(n){return Number.isFinite(n)?new Intl.NumberFormat(document.documen
 function formatShortDate(ts){if(!Number.isFinite(ts))return '';return new Date(ts).toLocaleString(document.documentElement.lang,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});}
 function formatSince(ts){if(!Number.isFinite(ts))return '';return new Date(ts).toLocaleDateString(document.documentElement.lang,{month:'short',day:'numeric'});}
 function setText(id,value=''){const el=$(id);if(el)el.textContent=value;}
+// Ghost numerals render solid, so an em-dash placeholder needs its own quiet treatment.
+function markPlaceholders(){for(const id of ['codexPrimary','proPrimary','proReset24Large','proReset48Large']){const el=$(id);if(el)el.dataset.placeholder=String(el.textContent.trim()==='—');}}
 function setTrust(el,kind,label){if(!el)return;el.classList.remove(...TRUST_KINDS);el.classList.add(kind);const labelEl=el.querySelector('.trust-label');if(labelEl)labelEl.textContent=label;else el.textContent=label;}
 function manualPlan(){const p=C.obj(state.settings[SCOPE]).plan||'auto';return p==='auto'?'':p;}
 function selectedPlan(){return manualPlan()||live?.plan||'';}
@@ -53,6 +55,7 @@ function renderResetForecast(){
     const trust=$('proTrust');
     setTrust(trust,resetForecastState==='live'?'live':resetForecastState==='error'?'unavailable':'estimated',t('popup_forecast','Forecast'));
   }
+  markPlaceholders();
 }
 async function refreshResetForecast(){
   const api=window.GPTResetForecast;if(!api||resetForecastBusy)return;
@@ -100,6 +103,7 @@ function renderMainTrend(){
   const shape=mainTrendPath(values),line=$('usageTrendPath'),area=$('usageTrendArea'),dots=$('usageTrendDots');
   if(line)line.setAttribute('d',shape.line);
   if(area)area.setAttribute('d',shape.area);
+  const empty=$('usageTrendEmpty');if(empty)empty.hidden=shape.points.length>=2;
   if(dots){dots.textContent='';shape.points.forEach((p,i)=>{if(i!==shape.points.length-1&&i!==Math.max(0,shape.points.length-2))return;const c=document.createElementNS('http://www.w3.org/2000/svg','circle');c.setAttribute('class','trend-main-dot');c.setAttribute('cx',p.x.toFixed(1));c.setAttribute('cy',p.y.toFixed(1));c.setAttribute('r',i===shape.points.length-1?'4':'3');dots.append(c);});}
   setText('usageTrendToday',fmt(Number(stats.today)||0));
   const avg=Number(activity?.avg7),today=Number(stats.today)||0,delta=$('usageTrendDelta');
@@ -205,6 +209,7 @@ function render(){
   }else{
     setText('codexPrimary','—');setText('codexUnit','');setText('codexSuffix','');setText('codexResetText',t('compact_no_server','No live server meter'));setProgress('codexProgress',null,'codexPercentLabel');setTrust($('codexTrust'),liveError?'error':'unavailable',freshLabel(liveError?'error':'unavailable'));
   }
+  markPlaceholders();
 }
 async function load({refresh=false}={}){const r=await send({type:'UG_STATE'});if(r.ok){state=C.state(r.state);stats=r.stats||stats;activity=r.activity||activity;codexTrend=Array.isArray(r.codexTrend)?r.codexTrend:codexTrend;live=r.liveUsage||null;liveError=r.liveError||null;proUsage=r.proUsage||null;proCycles=r.proCycles||null;}else GPTFeedback.status(t('state_error'),true);render();if(refresh&&(!live||C.freshness(live.updatedAt).kind!=='live'))void refreshLive();}
 async function refreshLive(){

@@ -136,18 +136,23 @@ document.addEventListener('DOMContentLoaded',()=>{
       const rect=wrap.getBoundingClientRect(),w=Math.max(1,Math.floor(rect.width)),h=Math.max(160,Math.floor(rect.height)),dpr=Math.min(2,window.devicePixelRatio||1);
       canvas.width=w*dpr;canvas.height=h*dpr;canvas.style.width=`${w}px`;canvas.style.height=`${h}px`;
       const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
-      const pad={l:12,r:10,t:12,b:26},cw=w-pad.l-pad.r,ch=h-pad.t-pad.b,max=Math.max(1,...days.map(x=>x.count));
-      const light=!document.body.classList.contains('dark');
-      ctx.strokeStyle=light?'rgba(64,86,110,.085)':'rgba(255,255,255,.055)';ctx.lineWidth=1;
-      for(let i=0;i<4;i++){const y=pad.t+ch*i/3;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(w-pad.r,y);ctx.stroke();}
+      // Round the ceiling so the three grid steps carry readable values.
+      const peak=Math.max(1,...days.map(x=>x.count)),magnitude=10**Math.max(0,Math.floor(Math.log10(peak))-1),step=Math.max(1,Math.ceil(peak/3/magnitude)*magnitude),max=step*3;
+      const light=!document.body.classList.contains('dark'),axis=light?'rgba(75,93,113,.90)':'rgba(170,164,168,.7)';
+      ctx.font='11px system-ui';const pad={l:has?Math.ceil(ctx.measureText(fmt(max)).width)+20:12,r:10,t:24,b:26},cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
+      ctx.strokeStyle=light?'rgba(64,86,110,.085)':'rgba(255,255,255,.055)';ctx.lineWidth=1;ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillStyle=axis;
+      for(let i=0;i<4;i++){const y=pad.t+ch*i/3;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(w-pad.r,y);ctx.stroke();if(has)ctx.fillText(fmt(step*(3-i)),pad.l-10,y);}
+      ctx.textBaseline='alphabetic';
       const pts=days.map((x,i)=>({x:pad.l+cw*i/(days.length-1),y:pad.t+ch-(x.count/max)*ch,v:x.count,d:x.d}));
       if(has){
         const grad=ctx.createLinearGradient(0,pad.t,0,pad.t+ch);grad.addColorStop(0,light?'rgba(166,79,106,.13)':'rgba(245,181,194,.28)');grad.addColorStop(1,light?'rgba(166,79,106,0)':'rgba(245,181,194,0)');
         ctx.beginPath();ctx.moveTo(pts[0].x,pad.t+ch);for(const p of pts)ctx.lineTo(p.x,p.y);ctx.lineTo(pts.at(-1).x,pad.t+ch);ctx.closePath();ctx.fillStyle=grad;ctx.fill();
         ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.strokeStyle=light?'#d73c7d':'#f3a9bc';ctx.lineWidth=2;ctx.lineJoin='round';ctx.lineCap='round';ctx.stroke();
         for(const p of pts){ctx.beginPath();ctx.arc(p.x,p.y,2.3,0,Math.PI*2);ctx.fillStyle=light?'#ec6ca3':'#f6c0cb';ctx.fill();}
+        const today=pts.at(-1);ctx.beginPath();ctx.arc(today.x,today.y,4.2,0,Math.PI*2);ctx.fillStyle=light?'#d73c7d':'#f3a9bc';ctx.fill();
+        ctx.font='600 12px system-ui';ctx.textAlign='right';ctx.fillText(fmt(today.v),today.x,today.y-10);
       }else{ctx.beginPath();ctx.moveTo(pad.l,pad.t+ch);ctx.lineTo(w-pad.r,pad.t+ch);ctx.strokeStyle=light?'rgba(166,79,106,.16)':'rgba(245,181,194,.12)';ctx.stroke();}
-      ctx.font='11px system-ui';ctx.fillStyle=light?'rgba(75,93,113,.90)':'rgba(170,164,168,.7)';ctx.textAlign='center';
+      ctx.font='11px system-ui';ctx.fillStyle=axis;ctx.textAlign='center';
       (w<400?[0,6,13]:[0,3,6,9,13]).forEach(i=>{ctx.textAlign=i===0?'left':i===13?'right':'center';ctx.fillText(days[i].d.toLocaleDateString(document.documentElement.lang,{month:'short',day:'numeric'}),pts[i].x,h-7);});
       this.points=pts;
     }
@@ -196,6 +201,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.addEventListener('gpt-theme-changed',()=>{if(current==='overview'&&overview.lastTrendData)overview.renderTrend(overview.lastTrendData);});
   document.addEventListener('gpt-language-changed',()=>{th.setAttribute('aria-label',t('label_appearance'));if(current==='overview')void overview.load();});
   setInterval(()=>{if(!document.hidden&&current==='overview')void overview.load();},30000);
+  // The trend panel stretches to its row, so redraw whenever the chart area itself changes size.
+  new ResizeObserver(()=>{if(current==='overview'&&overview.lastTrendData)overview.renderTrend(overview.lastTrendData);}).observe(overview.canvas.parentElement);
   window.addEventListener('resize',()=>{
     clearTimeout(overviewResizeTimer);overviewResizeTimer=setTimeout(()=>{if(current==='activity')redrawActivity();else if(current==='overview')void overview.load();},160);
   });

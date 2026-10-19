@@ -19,6 +19,7 @@
 <link rel="stylesheet" href="dashboard-controls-fix.css">
 <script src="motion.js"></script>
 <link rel="stylesheet" href="prediction-ui.css">
+<link rel="stylesheet" href="frontend/dashboard-refine.css">
 </head>
 <body>
   <div class="container">
@@ -30,7 +31,9 @@
       <div class="header-right">
         <div class="toggle">
           <span class="sr-only" data-i18n="label_appearance">Appearance</span>
+          <svg class="theme-icon theme-sun" viewBox="0 0 40 40" aria-hidden="true" focusable="false"><circle cx="20" cy="20" r="8"/><path d="M20 3v5m0 24v5M3 20h5m24 0h5M8 8l3.5 3.5m17 17L32 32M8 32l3.5-3.5m17-17L32 8"/></svg>
           <div id="themeToggle" class="ios-switch" role="switch" aria-checked="false" tabindex="0"></div>
+          <svg class="theme-icon theme-moon" viewBox="0 0 36 40" aria-hidden="true" focusable="false"><path d="M14 6C2 11 2 28 14 32c7 3 14-1 17-7C15 29 7 18 14 6Z"/></svg>
         </div>
 
         <div id="languageToggle" class="lang-inline" aria-label="Language" data-i18n-aria="button_language">
@@ -39,8 +42,13 @@
           <span class="opt" data-lang="en">EN</span>
         </div>
 
-        <button id="exportData" class="secondary-button tool-btn" type="button" data-i18n="button_export">Export</button>
-        <button id="importData" class="secondary-button tool-btn" type="button" data-i18n="button_import">Import</button>
+        <div class="data-menu-shell">
+          <button id="dataMenuButton" class="secondary-button tool-btn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="dataMenu"><span data-i18n="button_data">Data</span><svg class="year-select-caret" viewBox="0 0 12 8" aria-hidden="true" focusable="false"><path d="M1.5 1.75L6 6.25L10.5 1.75" /></svg></button>
+          <div id="dataMenu" class="data-menu" role="menu" aria-labelledby="dataMenuButton" hidden>
+            <button id="exportData" class="data-menu-item" type="button" role="menuitem" tabindex="-1" data-i18n="button_export">Export</button>
+            <button id="importData" class="data-menu-item" type="button" role="menuitem" tabindex="-1" data-i18n="button_import">Import</button>
+          </div>
+        </div>
         <input type="file" id="importFileInput" accept="application/json" style="display: none" />
         <div class="year-select-shell">
           <button id="yearSelectButton" class="year-select-trigger" type="button" aria-label="Year" data-i18n-aria="year" aria-haspopup="listbox" aria-expanded="false" aria-controls="yearSelectMenu">

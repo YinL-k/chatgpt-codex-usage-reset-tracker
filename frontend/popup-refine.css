@@ -1,0 +1,120 @@
+/* SakuraMeter popup refinement. Loaded last; presentation only.
+   The 941px artboard renders at roughly 0.37 scale inside Chrome's 600px popup,
+   so 28px here is about 10.5 CSS px — the floor for every line of copy.
+   Card surfaces, waves, ghost numerals and the trend-first order are unchanged. */
+
+/* ---------- Vertical rhythm ---------- */
+#artboard .membership{top:128px;height:172px}
+#artboard .usage-trend-main{top:316px;height:232px}
+#artboard .codex{top:564px;height:372px}
+#artboard .pro{top:952px;height:222px}
+#artboard .activity{top:1190px;height:178px}
+#artboard .dashboard-cta{top:1384px;height:128px}
+#artboard .footer{top:1530px;height:56px}
+
+/* ---------- Header ---------- */
+#artboard .brand-mark{top:31px;width:68px;height:68px}
+#artboard .brand-title{top:36px;left:118px;font-size:42px;line-height:58px}
+#artboard .version{top:45px;left:350px;width:auto;height:40px;padding:0 14px;font-size:24px}
+#artboard .language{top:35px;height:60px}
+#artboard .language button{font-size:26px}
+#artboard .theme-control{top:40px}
+
+/* ---------- Membership ---------- */
+#artboard .membership .icon-tile{left:26px;top:40px;width:88px;height:90px}
+#artboard .membership-label{left:142px;top:20px;font-size:28px;line-height:34px}
+#artboard .membership-title{left:142px;top:52px;font-size:46px;line-height:58px}
+#artboard .membership-description{left:142px;top:112px;right:26px;font-size:29px;line-height:36px}
+#artboard .membership .badge{top:22px;right:26px;height:50px;font-size:27px}
+#artboard .membership.has-inline-notice .membership-label{top:12px;font-size:26px;line-height:30px}
+#artboard .membership.has-inline-notice .membership-title{top:40px;font-size:36px;line-height:44px}
+#artboard .membership .popup-notice{left:142px!important;right:20px!important;bottom:10px!important;padding:7px 12px!important}
+#artboard .membership .popup-notice .notice-message{font-size:27px!important;line-height:31px!important;max-height:62px}
+#artboard .membership .popup-notice #noticeRetry{font-size:27px!important;padding:4px 12px!important}
+
+/* ---------- Usage trend ---------- */
+#artboard .usage-trend-main>.trend-main-head{top:20px}
+#artboard .usage-trend-main>.trend-main-head>div{display:flex;align-items:baseline;gap:16px;min-width:0}
+#artboard .trend-main-title{font-size:38px;line-height:48px;white-space:nowrap}
+#artboard .trend-main-sub{margin:0;font-size:28px;line-height:34px;white-space:nowrap}
+#artboard .trend-main-range{height:42px;min-width:62px;padding:0 14px;border-radius:18px;font-size:26px}
+#artboard .usage-trend-main .trend-main-chart{top:82px;height:96px}
+#artboard .trend-main-foot{bottom:14px;font-size:28px;line-height:34px}
+#artboard .trend-main-empty{position:absolute;left:28px;right:28px;top:82px;height:96px;z-index:2;display:flex;align-items:center;justify-content:center;margin:0;font-size:28px;line-height:34px;color:#8f8a91}
+#artboard .trend-main-empty[hidden]{display:none}
+#artboard[data-theme=light] .trend-main-empty{color:#7a6d75}
+
+/* ---------- Shared Pro / Codex header row ---------- */
+#artboard :is(.pro,.codex) .icon-tile{left:25px;top:20px;width:66px;height:66px}
+#artboard :is(.pro,.codex) .usage-title{left:110px;top:20px;font-size:40px;line-height:56px}
+#artboard :is(.pro,.codex) .card-bottom{font-size:28px;line-height:34px}
+#artboard :is(.pro,.codex) .card-bottom .icon{width:28px;height:28px}
+
+/* ---------- Codex ---------- */
+#artboard .codex #codex-title{max-width:520px;font-size:40px}
+#artboard .codex #codexTrust{left:auto;right:62px;top:25px;width:auto;max-width:none;height:46px;min-width:0;padding:0 16px;font-size:27px;white-space:nowrap}
+#artboard .codex .codex-kpi-caption{top:108px;height:34px}
+#artboard .codex .codex-kpi-caption .number-suffix{font-size:28px;line-height:34px;letter-spacing:.5px}
+/* The ghost numeral is the value itself: near-solid at the top, softening toward the bar. */
+#artboard .codex .codex-background-kpi{top:84px;height:112px;-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 55%,rgba(0,0,0,.55) 100%);mask-image:linear-gradient(to bottom,#000 0%,#000 55%,rgba(0,0,0,.55) 100%)}
+#artboard .codex .codex-background-kpi .large-number{top:4px;font-size:132px;letter-spacing:-6px;color:rgba(158,226,173,.92)!important}
+#artboard .codex .codex-background-kpi .codex-unit{top:18px;font-size:34px;color:rgba(158,226,173,.78)!important}
+#artboard[data-theme=light] .codex .codex-background-kpi .large-number{color:rgba(56,122,80,.92)!important}
+#artboard[data-theme=light] .codex .codex-background-kpi .codex-unit{color:rgba(56,122,80,.74)!important}
+#artboard .codex .progress-row{top:206px}
+#artboard .codex .card-bottom{top:240px;bottom:auto;height:40px}
+#artboard .codex.has-saved-data .progress-row{top:206px}
+#artboard .codex.has-saved-data .card-bottom{top:232px;bottom:auto;height:58px}
+#artboard .codex .popup-cache-note{font-size:26px;line-height:29px}
+#artboard .codex-reset-outlook{bottom:14px;height:66px;grid-template-columns:280px 1fr 1fr;column-gap:24px}
+#artboard .codex-reset-open{height:60px;gap:12px}
+#artboard .codex-reset-open .reset-mark{width:10px;height:10px}
+#artboard .codex-reset-title{font-size:30px;line-height:34px}
+#artboard .codex-reset-sub{max-width:236px;overflow:hidden;text-overflow:ellipsis;font-size:26px;line-height:30px}
+#artboard .codex-reset-open .chevron{width:16px;height:24px}
+#artboard .codex-reset-metric-head{font-size:26px;line-height:34px}
+#artboard .codex-reset-metric strong{font-size:34px;line-height:38px}
+#artboard .codex-reset-track{height:5px;margin-top:6px}
+
+/* ---------- Pro ---------- */
+#artboard .pro #proTrust{left:196px;top:25px;height:46px;min-width:0;padding:0 16px;font-size:27px;line-height:32px}
+#artboard .pro .pro-kpi-caption{top:96px;height:34px}
+#artboard .pro .pro-kpi-caption .number-suffix{font-size:28px;line-height:34px;letter-spacing:.5px}
+#artboard .pro .pro-background-kpi{top:68px;height:80px;-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 55%,rgba(0,0,0,.55) 100%);mask-image:linear-gradient(to bottom,#000 0%,#000 55%,rgba(0,0,0,.55) 100%)}
+#artboard .pro .pro-background-kpi .large-number{bottom:-6px;font-size:108px;letter-spacing:-6px;color:rgba(246,184,197,.92);-webkit-text-fill-color:currentColor}
+#artboard[data-theme=light] .pro .pro-background-kpi .large-number{color:rgba(176,72,108,.9);-webkit-text-fill-color:currentColor}
+#artboard .pro .progress-row{top:154px}
+#artboard .pro .percentage{font-size:28px;min-width:58px}
+#artboard .pro .card-bottom{top:182px;bottom:auto;height:34px}
+#artboard .pro .card-bottom p{max-width:50%}
+/* No-Pro plans reuse this card for the reset forecast; its labels follow the same floor. */
+#artboard .pro.is-reset-forecast #proTrust{left:auto!important;right:22px!important;top:18px!important;height:42px!important;font-size:26px!important;line-height:40px!important}
+#artboard .pro.is-reset-forecast .pro-reset-forecast{top:70px!important}
+#artboard .pro.is-reset-forecast .pro-reset-label{font-size:28px!important;line-height:34px!important}
+#artboard .pro.is-reset-forecast .pro-reset-value>span:first-child{background:none!important;color:rgba(240,169,189,.9)!important;-webkit-text-fill-color:currentColor!important}
+#artboard .pro.is-reset-forecast .pro-reset-unit{color:rgba(240,169,189,.72)!important}
+#artboard[data-theme=light] .pro.is-reset-forecast .pro-reset-value>span:first-child{color:rgba(167,80,116,.9)!important}
+#artboard[data-theme=light] .pro.is-reset-forecast .pro-reset-unit{color:rgba(167,80,116,.7)!important}
+
+/* ---------- Local activity ---------- */
+#artboard .activity .icon-tile{left:25px;top:20px;width:62px;height:60px}
+#artboard .activity-title{left:106px;top:18px;font-size:36px;line-height:50px}
+#artboard .info-button{left:auto;right:26px;top:26px;width:36px;height:36px}
+#artboard .info-button>.icon{width:36px;height:36px}
+#artboard .activity-columns{top:82px;height:84px}
+#artboard .activity-column .period{top:2px;font-size:28px;line-height:34px}
+#artboard .activity-column .count{top:36px;font-size:50px;line-height:50px}
+#artboard .quiet .leaf{top:-10px;width:40px;height:42px}
+#artboard .activity .quiet-title{top:38px;max-width:340px;font-size:28px;line-height:34px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ---------- Dashboard CTA and footer ---------- */
+#artboard .dashboard-cta .icon-tile{top:30px;width:66px;height:66px}
+#artboard .cta-heading{left:110px;top:20px;font-size:38px;line-height:50px}
+#artboard .cta-subtitle{left:111px;top:72px;font-size:28px;line-height:34px}
+#artboard .cta-arrow{left:auto;right:36px;top:48px;width:34px;height:30px}
+#artboard .tagline{font-size:28px;line-height:36px}
+#artboard #scOpen{padding:10px 18px;font-size:27px;line-height:32px}
+
+/* Placeholder dashes keep the old ghosted weight instead of reading as a solid bar. */
+#artboard .large-number[data-placeholder="true"],#artboard .pro-reset-value>span[data-placeholder="true"]{opacity:.28}
+#artboard .large-number[data-placeholder="true"]~.codex-unit{display:none}
