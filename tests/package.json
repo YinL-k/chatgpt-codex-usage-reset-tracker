@@ -2,7 +2,7 @@
   "name": "gpt-tracker-regression-tests",
   "private": true,
   "scripts": {
-    "test": "node --test pro-plans.test.cjs core.test.cjs reset.test.cjs refresh.test.cjs prediction.test.cjs prediction-worker.test.cjs page-worker.test.cjs page-reference-worker.test.cjs agent.test.cjs agent-worker.test.cjs",
+    "test": "node --test pro-plans.test.cjs core.test.cjs reset.test.cjs refresh.test.cjs prediction.test.cjs prediction-worker.test.cjs page-worker.test.cjs page-reference-worker.test.cjs agent.test.cjs agent-worker.test.cjs sidechat-window.test.cjs",
     "browser": "node browser.cjs",
     "readability": "node readability.cjs",
     "themes": "node themes.cjs",

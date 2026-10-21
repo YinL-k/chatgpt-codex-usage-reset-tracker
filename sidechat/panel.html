@@ -59,6 +59,7 @@
   <details hidden><summary data-agent-t="agentLog">Task activity</summary><ol id="agent-events"></ol></details><div id="agent-answer" hidden></div>
 </section>
 <main class="workspace">
+<p id="bound-notice" class="notice" data-t="boundElsewhere" hidden></p>
 <section id="welcome" class="welcome" hidden>
   <div class="welcome-art"><div class="halo"></div><img src="../assets/sakurameter-128.png" alt=""></div>
   <span class="eyebrow" data-t="local">SIDE CHAT</span>
@@ -77,10 +78,10 @@
 </main>
 
 </div>
-<dialog id="preferences"><div class="dialog-head"><h2 data-t="settingsTitle">Side Chat preferences</h2><button id="close-settings" class="icon-button" data-tip="close"><svg><use href="#i-close"/></svg></button></div>
-<div class="setting-block"><label class="reference-setting"><span data-t="pageReferenceLabel">Page reference</span><input id="page-reference-toggle" type="checkbox" role="switch" checked></label><p data-t="pageReferenceNote"></p><label class="reference-setting"><span data-t="deduplicatePageLabel">Deduplicate page</span><input id="deduplicate-page-toggle" type="checkbox" role="switch" checked></label><p data-t="deduplicatePageNote"></p></div>
+<dialog id="preferences"><div class="dialog-head"><h2 data-t="settingsTitle">Side Chat preferences</h2><button type="button" id="close-settings" class="icon-button" data-tip="close"><svg><use href="#i-close"/></svg></button></div>
+<div class="setting-block"><h3 data-t="captureLabel"></h3><p id="settings-capture-status" role="status" aria-live="polite"></p><button id="settings-pause" type="button" class="secondary-button" data-t="pause" aria-pressed="false"></button><p data-t="captureNote"></p><label class="reference-setting"><span data-t="pageReferenceLabel">Page reference</span><input id="page-reference-toggle" type="checkbox" role="switch" checked></label><p data-t="pageReferenceNote"></p><label class="reference-setting"><span data-t="deduplicatePageLabel">Deduplicate page</span><input id="deduplicate-page-toggle" type="checkbox" role="switch" checked></label><p data-t="deduplicatePageNote"></p></div>
 <div class="setting-block agent-settings"><h3 data-agent-t="agentSettings">Agent settings</h3><p data-agent-t="agentNote"></p><label><span data-agent-t="agentFormat">Response format</span><select class="agent-select" id="agent-format"><option value="json">JSON</option><option value="xml">XML</option></select></label><p data-agent-t="agentFormatNote"></p><label><span data-agent-t="agentLimit">Maximum actions</span><input class="agent-select" id="agent-limit" type="number" min="1" max="50" value="20"></label></div>
-<div class="setting-block"><h3 data-t="captureLabel">Automatic page context</h3><p data-t="captureNote"></p><button id="settings-pause" class="secondary-button" data-t="pause"></button></div>
+<div class="setting-block"><h3 data-t="windowLabel"></h3><p data-t="windowNote"></p><h3 data-t="appearanceLabel"></h3><p data-t="staticGlowNote"></p></div>
 <div class="setting-block"><h3 data-t="permissionsLabel">Website access</h3><p data-t="permissionsNote"></p><button id="grant-all" class="secondary-button" data-t="grantAll"></button><button id="manage" class="text-button" data-t="managePermissions"></button></div>
 <div class="setting-block"><h3 data-t="privacyTitle"></h3><p data-t="privacyBody"></p><p data-t="countNote"></p><kbd>Alt + Shift + C</kbd></div>
 </dialog>

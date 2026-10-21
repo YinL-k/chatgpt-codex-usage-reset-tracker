@@ -53,6 +53,36 @@ async function run(){
    await p.waitForFunction(n=>received.filter(m=>m.type==='SC_SENT').length>n,counted);return text;
   };
   await update();const first=await send('这题为什么错？');assert.ok(first.includes('<PageContext>\nPAGE_REFERENCE_BODY'));
+  // Slow React commits can keep Send disabled well beyond two animation frames.
+  await frame.evaluate(()=>{
+   window.slowCommit=true;
+   document.querySelector('textarea').addEventListener('input',e=>{
+    if(!slowCommit||!e.target.value.includes('<PageContext>'))return;
+    const value=e.target.value,b=document.querySelector('[data-testid=send-button]');b.disabled=true;
+    setTimeout(()=>{modelDraft=value;b.disabled=false;},650);
+   });
+  });
+  await update('SLOW_COMMIT_PAGE');assert.ok((await send('slow native commit')).includes('SLOW_COMMIT_PAGE'));
+  await frame.evaluate(()=>slowCommit=false);
+  // A native click can be ignored without clearing the composer. Keep the
+  // original question, never nest wrappers and never resend automatically.
+  await frame.evaluate(()=>{
+   window.dropSend=true;document.querySelector('[data-testid=send-button]').addEventListener('click',e=>{
+    if(dropSend){e.preventDefault();e.stopImmediatePropagation();}
+   },true);
+  });
+  const ignoredBefore=await frame.evaluate(()=>submits.length);
+  await frame.locator('textarea').fill('recover my exact draft');await frame.locator('[data-testid=send-button]').click();
+  await frame.waitForFunction(()=>document.querySelector('textarea').value.includes('<UserRequest>'));
+  await frame.waitForFunction(()=>document.querySelector('textarea').value==='recover my exact draft',null,{timeout:14000});
+  assert.equal(await frame.evaluate(()=>submits.length),ignoredBefore);
+  assert.ok(await p.evaluate(()=>received.some(m=>m.key==='deliveryUnconfirmed')));
+  await frame.evaluate(()=>dropSend=false);assert.ok((await send('recover my exact draft')).includes('<UserRequest>\nrecover my exact draft'));
+  // No cached context must still leave a visible recovery control.
+  await p.evaluate(()=>bridge.postMessage({...latestState,context:null}));
+  await frame.waitForFunction(()=>document.querySelector('[data-sakura-sidechat=quote]')?.hidden===false);
+  assert.equal(await frame.locator('.restore').isVisible(),true);
+  await update('PAGE_REFERENCE_BODY');await send('restore the original page');
   const second=await send('  Python tuple 和 list 有什么区别？\n保持原话  ');assert.ok(!second.includes('<PageContext>'));assert.ok(second.includes('PageReference: active; unchanged'));assert.equal(await frame.locator('.remove-page').isVisible(),true);assert.ok(second.includes('<UserRequest>\n  Python tuple 和 list 有什么区别？\n保持原话  \n</UserRequest>'));
   await p.evaluate(()=>{latestState.context.page.text='JUST_CHANGED_BEFORE_SEND';latestState.context.page.originalLength=100;latestState.context.page.fingerprint=null;});
   assert.ok((await send('立即发送')).includes('JUST_CHANGED_BEFORE_SEND'));
@@ -77,7 +107,7 @@ async function run(){
   assert.ok((await send('another ordinary question')).includes('SAME_CHAT_PAGE'));
   await frame.evaluate(()=>history.pushState({},'', '/c/new-conversation'));assert.ok((await send('new conversation keeps Page')).includes('SAME_CHAT_PAGE'));
   const beforeFail=await frame.evaluate(()=>submits.length);await p.evaluate(()=>snapshotFails=true);await frame.locator('textarea').fill('keep draft');await frame.locator('[data-testid=send-button]').click();await frame.waitForTimeout(100);assert.equal(await frame.evaluate(()=>submits.length),beforeFail);assert.equal(await frame.locator('textarea').inputValue(),'keep draft');assert.ok(await p.evaluate(()=>received.some(m=>m.key==='freshnessError')));await p.evaluate(()=>snapshotFails=false);
-  await p.evaluate(()=>snapshotDrop=true);await frame.locator('[data-testid=send-button]').click();await frame.waitForTimeout(2100);assert.equal(await frame.evaluate(()=>submits.length),beforeFail);assert.equal(await frame.locator('textarea').inputValue(),'keep draft');await p.evaluate(()=>snapshotDrop=false);
+  await p.evaluate(()=>snapshotDrop=true);await frame.locator('[data-testid=send-button]').click();await frame.waitForTimeout(5100);assert.equal(await frame.evaluate(()=>submits.length),beforeFail);assert.equal(await frame.locator('textarea').inputValue(),'keep draft');await p.evaluate(()=>snapshotDrop=false);
   await p.evaluate(()=>snapshotDelay=300);await frame.locator('[data-testid=send-button]').click();await frame.locator('[data-testid=send-button]').click();await frame.waitForFunction(n=>submits.length===n+1,beforeFail);assert.equal(await frame.evaluate(()=>submits.length),beforeFail+1);
   await frame.locator('textarea').fill('pending draft');const beforeCancel=await frame.evaluate(()=>submits.length);await frame.locator('[data-testid=send-button]').click();await frame.locator('textarea').fill('edited draft');await frame.waitForTimeout(400);assert.equal(await frame.evaluate(()=>submits.length),beforeCancel);assert.equal(await frame.locator('textarea').inputValue(),'edited draft');
   await frame.locator('[data-testid=send-button]').click();await frame.locator('.remove-page').click();await frame.waitForTimeout(400);assert.equal(await frame.evaluate(()=>submits.length),beforeCancel);

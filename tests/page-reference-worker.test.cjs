@@ -47,3 +47,21 @@ test('navigation or Page OFF during capture invalidates its pending response',as
   await until(()=>h.messages.some(m=>m.requestId===operation));assert.equal(h.messages.find(m=>m.requestId===operation).ok,false);
  }
 });
+test('pause blocks capture and fresh snapshots, persists through refresh, and resumes',async()=>{
+ const h=await harness();await h.request({type:'SC_PAGE_CONTEXT',text:'before pause'});
+ h.panel({type:'SC_PAUSE',value:true});await until(()=>h.state().paused);
+ assert.equal(h.state().context,null);
+ assert.equal((await h.request({type:'SC_PAGE_CONTEXT',text:'late capture'})).ok,false);
+ h.panel({type:'SC_REFRESH',force:true});await wait();assert.equal(h.state().paused,true);
+ h.panel({type:'SC_RESTORE_PAGE',pageIdentity:h.tab.url});await wait();assert.equal(h.state().paused,true,'restoring page preference must not silently resume capture');
+ h.panel({type:'SC_PAUSE',value:false});await until(()=>!h.state().paused);
+ assert.equal((await h.request({type:'SC_PAGE_CONTEXT',text:'after resume'})).ok,true);
+ assert.equal(h.state().context.page.text,'after resume');
+});
+test('pause cancels an in-flight snapshot without waiting for its response',async()=>{
+ const h=await harness();let resolve;h.snapshot(()=>new Promise(r=>resolve=r));
+ h.panel({type:'SC_ENSURE_PAGE',requestId:'pause-pending',pageIdentity:h.tab.url});await until(()=>!!resolve);
+ h.panel({type:'SC_PAUSE',value:true});await until(()=>h.state().paused);
+ resolve({ok:true,pageIdentity:h.tab.url});await until(()=>h.messages.some(m=>m.requestId==='pause-pending'));
+ assert.equal(h.messages.find(m=>m.requestId==='pause-pending').ok,false);
+});

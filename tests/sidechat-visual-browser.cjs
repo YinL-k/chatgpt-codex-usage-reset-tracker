@@ -30,6 +30,9 @@ async function run(){
   assert(lights.every(e=>Number(e.opacity)===0&&e.animation==='none'));
   assert.notEqual(await p.locator('.sm-ambient-rest').evaluate(e=>getComputedStyle(e).boxShadow),'none');
   assert.equal(await p.locator('.sm-ambient-rest').evaluate(e=>getComputedStyle(e).opacity),'1');
+  assert.equal(await p.locator('.sm-ambient-rest').evaluate(e=>getComputedStyle(e).animationName),'none');
+  assert.equal(await p.locator('.sm-ambient-rest').evaluate(e=>e.getAnimations().length),0);
+  assert.equal(await p.locator('.sm-ambient-flow').evaluate(e=>getComputedStyle(e).visibility),'hidden');
   assert(lights.some(e=>e.rect.x<0)&&lights.some(e=>e.rect.right>420));
   assert.equal(await p.locator('.sm-ambient-flow').evaluate(e=>getComputedStyle(e).pointerEvents),'none');
   async function boundary(){

@@ -301,3 +301,19 @@ body.sm-content-reveal #welcome{opacity:0}
 .reference-setting input:checked{background:rgba(199,134,161,.38);border-color:#c786a1}.reference-setting input:checked::before{transform:translateX(14px);opacity:1}
 @media(forced-colors:active){.reference-setting input{appearance:auto}.reference-setting input::before{display:none}}
 @media(prefers-reduced-motion:reduce){.reference-setting input,.reference-setting input::before{transition:none}}
+
+/* Resting chat has no ambient animation or promoted moving layer. */
+body[data-side-stage="chat"] .sm-ambient-flow{visibility:hidden;will-change:auto}
+body[data-side-stage="chat"] .sm-ambient-flow .sm-ambient-blob{will-change:auto}
+body[data-side-stage="chat"] .sm-ambient-rest{animation:none!important;transition:none!important;transform:none;will-change:auto}
+#preferences{max-height:calc(100dvh - 32px);overflow:auto}
+#preferences .setting-block{padding:16px 0;border-top:1px solid var(--line,rgba(160,140,150,.25))}
+#preferences .setting-block h3{font-size:14px;margin:0 0 8px}
+#preferences .setting-block p{line-height:1.6;margin:8px 0 12px}
+#preferences .reference-setting{gap:16px;margin-top:16px;min-height:36px}
+#preferences .reference-setting input{flex-shrink:0;width:36px;height:20px;color:var(--ink);accent-color:#b36187}
+#preferences .reference-setting input::before{top:3px;left:3px}
+#preferences .reference-setting input:checked::before{transform:translateX(16px)}
+#preferences .dialog-head{position:sticky;top:0;z-index:4;background:var(--surface);padding:10px 0;border-bottom:1px solid var(--line)}
+#settings-capture-status{font-weight:600}
+#preferences button{min-height:36px}

@@ -3,7 +3,7 @@
   'use strict';
   const svg = '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 5H3v6h4V5Zm10 0h-4v6h4V5ZM7 11c0 3-2 4-4 4m14-4c0 3-2 4-4 4"/></svg>';
   function create({composer,translate,onClear,onDismiss,onRestore,onSendSelection,selectionSendStatus}) {
-    let host=null,shadow=null,previewOpen=false, current=null, lastKey='',currentTheme='dark',dismissed=false;
+    let host=null,shadow=null,previewOpen=false, current=null, lastKey='',currentTheme='dark',dismissed=false,lastAvailability={};
     const folds=new WeakMap(),foldList=[];
     function mount() {
       if(!host) {
@@ -38,7 +38,7 @@
 </style><button class="restore" hidden></button><div class="row"><button class="chip" type="button">${svg}<span class="label"></span></button><button class="remove-page" type="button">×</button><button class="send-selection" type="button"><span class="arrow" aria-hidden="true">↑</span><span class="send-label"></span></button><button class="remove" type="button">\u00d7</button></div><div class="preview" hidden><div class="source"></div><pre></pre><p class="note"></p></div>`;
         shadow.querySelector('.remove-page').addEventListener('click',()=>{previewOpen=false;onDismiss(current);composer()?.focus();});
         shadow.querySelector('.restore').addEventListener('click',()=>onRestore());
-        shadow.querySelector('.chip').addEventListener('click',()=>{previewOpen=!previewOpen;lastKey='';update(current,currentTheme,dismissed);});
+        shadow.querySelector('.chip').addEventListener('click',()=>{previewOpen=!previewOpen;lastKey='';update(current,currentTheme,dismissed,lastAvailability);});
         shadow.querySelector('.remove').addEventListener('click',()=>{if(current?.selection)onClear(current);previewOpen=false;composer()?.focus();});
         shadow.querySelector('.send-selection').addEventListener('click',()=>{if(typeof onSendSelection==='function')onSendSelection();});
       }
@@ -46,16 +46,16 @@
       if(parent&&!parent.contains(host))parent.insertBefore(host,parent.firstChild);
       return !!el;
     }
-    function update(item,theme='dark',paused=false) {
-      dismissed=paused;current=item;currentTheme=theme;const hasEditor=mount();
+    function update(item,theme='dark',paused=false,availability={}) {
+      lastAvailability=availability;dismissed=paused;current=item;currentTheme=theme;const hasEditor=mount();
       const editor=composer(),draft=editor?(typeof editor.value==='string'?editor.value:editor.innerText||editor.textContent||''):'';
       const page=SakuraSideCore.validPage(item?.page),selection=SakuraSideCore.validSelection(item?.selection);
       const sendState=typeof selectionSendStatus==='function'?selectionSendStatus():'unavailable';
-      const key=JSON.stringify([item?.id,item?.page?.fingerprint,item?.selection?.id,item?.selection?.capturedAt,theme,paused,previewOpen,translate('shortPage'),translate('sendSelection'),hasEditor,selection,!!draft.trim(),sendState]);
+      const key=JSON.stringify([item?.id,item?.page?.fingerprint,item?.selection?.id,item?.selection?.capturedAt,theme,paused,previewOpen,translate('shortPage'),translate('sendSelection'),hasEditor,page,selection,!!draft.trim(),sendState,availability.status,availability.source]);
       if(lastKey===key)return;lastKey=key;
-      host.hidden=(!page&&!selection&&!paused)||!hasEditor;host.dataset.theme=theme;
+      host.hidden=!hasEditor||(!page&&!selection&&!paused&&!availability.source);host.dataset.theme=theme;
       shadow.querySelector('.row').hidden=!page&&!selection;
-      const restore=shadow.querySelector('.restore');restore.hidden=!paused;restore.textContent=translate('restorePage');
+      const restore=shadow.querySelector('.restore');restore.hidden=!paused&&page;restore.disabled=['paused','restricted','access-needed','bound-elsewhere'].includes(availability.status);restore.textContent=translate(availability.status==='paused'?'paused':availability.status==='access-needed'?'access':availability.status==='restricted'?'restricted':paused?'restorePage':'refreshContext');
       const closePage=shadow.querySelector('.remove-page');closePage.hidden=!page;closePage.title=translate('removePage');closePage.setAttribute('aria-label',translate('removePage'));
       if(!page&&!selection){shadow.querySelector('.preview').hidden=true;shadow.querySelector('pre').textContent='';return;}
       shadow.querySelector('.label').textContent=(page?translate('shortPage'):'')+(page&&selection?' \u00b7 ':'')+(selection?translate('shortSelection'):'');
