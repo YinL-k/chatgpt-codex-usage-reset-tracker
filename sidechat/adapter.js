@@ -436,7 +436,7 @@
     context=K.validContext(m.context)?m.context:null;
     if(context?.selection&&receipts.some(r=>r.observed&&r.contextId===context.id&&r.selectionKey===K.selectionKey(context)))context={...context,selection:null};
     rebuild();render();
-    const button=sendButton(request.editor);if(!button||disabled(button))return;
+    const button=readyNativeSendButton(request.editor);if(!button){post({type:'SC_ERROR',key:'sendError'});return;}
     replaying=true;try{button.click();}finally{replaying=false;}
   }
   function checkSnapshot(event,el,question){

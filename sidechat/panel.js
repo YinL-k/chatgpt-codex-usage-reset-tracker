@@ -23,7 +23,7 @@
   }
   const t = key => SakuraSideStrings[lang]?.[key] || SakuraSideStrings.en[key] || key;
   function post(m) {
-    if(connected&&lifecycle){try{lifecycle.postMessage(m);return;}catch{connected=false;}}
+    if(connected&&lifecycle){try{lifecycle.postMessage(m);return;}catch{const old=lifecycle;lifecycle=null;connected=false;try{old.disconnect();}catch{}}}
     if(m.type==='SC_PING')return;
     if(m.type==='SC_ENSURE_PAGE'){
       try{bridge?.postMessage({type:'SC_PAGE_SNAPSHOT_RESULT',requestId:m.requestId,ok:false});}catch{}
@@ -85,7 +85,7 @@
     agent.render();
     if (!state) return;
     $('page-reference-toggle').checked=!state.pageDismissed;
-    $('settings-capture-status').textContent=t(state.paused?'paused':'captureActive');
+    $('settings-capture-status').textContent=t(state.paused?'paused':state.status==='restricted'?'restricted':state.status==='access-needed'?'access':state.status==='bound-elsewhere'?'boundElsewhere':'captureActive');
     $('settings-pause').setAttribute('aria-pressed',String(!!state.paused));
     $('bound-notice').hidden=state.status!=='bound-elsewhere';
     $('deduplicate-page-toggle').checked=state.deduplicatePage!==false;

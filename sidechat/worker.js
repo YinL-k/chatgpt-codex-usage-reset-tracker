@@ -158,7 +158,7 @@
             dismissed.set(tabId,tab.url);if(item)item.page=null;
             if(!item?.selection)store.clear(tabId);
             await messageTab(tabId,{type:'SC_PAGE_STOP'});
-          }else {dismissed.delete(tabId);paused.delete(windowId);}
+          }else dismissed.delete(tabId);
           await persist();await update(windowId,m.type==='SC_RESTORE_PAGE');
         } else if (windowId !== null && m?.type === 'SC_CLEAR') {
           const tabId = activeTabs.get(windowId); store.clearSelection(tabId, m.id, m.selectionKey); await persist();
