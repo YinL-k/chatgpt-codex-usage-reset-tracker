@@ -39,3 +39,11 @@ test('simultaneous incidental panels claim at most one window',async()=>{
  assert.equal(Number(a.state().enabled)+Number(b.state().enabled),1);
  assert.equal(h.data.__sakuraSideContextsV1Window,1);
 });
+test('popup opens within the click gesture while window binding is pending',async()=>{
+ let click,resolveBinding,inGesture=false,opened=0,closed=false;
+ const button={querySelector:()=>({}),addEventListener:(type,f)=>{if(type==='click')click=f;}};
+ const chrome={windows:{getCurrent:async()=>({id:7})},runtime:{sendMessage:m=>{assert.equal(m.windowId,7);return new Promise(r=>resolveBinding=r);}},sidePanel:{open:async o=>{assert.equal(inGesture,true);assert.equal(o.windowId,7);opened++;}}};
+ vm.runInNewContext(fs.readFileSync(require.resolve('../sidechat/popup-entry'),'utf8'),{chrome,Promise,document:{getElementById:()=>button,documentElement:{lang:'en'},addEventListener(){}},window:{close:()=>{closed=true;}}});
+ await wait();inGesture=true;click();inGesture=false;assert.equal(opened,1);assert.equal(closed,false);
+ resolveBinding({ok:true});await until(()=>closed);
+});

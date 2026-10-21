@@ -23,7 +23,7 @@
         store.clearWindow(previous);await persist();await update(previous,false);
         if(chrome.sidePanel?.close)await chrome.sidePanel.close({windowId:previous}).catch(()=>{});
       }
-      return true;
+      await update(windowId);return true;
     });
     return ownerQueue;
   }
@@ -132,6 +132,7 @@
         if(windowId!==null&&panels.get(windowId)!==port)return;
         if(windowId!==null&&m?.type!=='SC_PING'&&ownerWindowId!==windowId)return;
         if (m?.type === 'SC_HELLO' && Number.isInteger(m.windowId)) {
+          await ownerQueue;
           const w = await chrome.windows.get(m.windowId).catch(() => null); if (!w || windowId !== null) return;
           if(ownerWindowId===null||!await chrome.windows.get(ownerWindowId).catch(()=>null))await bindWindow(m.windowId,true);
           windowId = m.windowId; const old = panels.get(windowId); panels.set(windowId, port);
