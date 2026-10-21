@@ -311,6 +311,9 @@ body[data-side-stage="chat"] .sm-ambient-rest{animation:none!important;transitio
 #preferences .setting-block h3{font-size:14px;margin:0 0 8px}
 #preferences .setting-block p{line-height:1.6;margin:8px 0 12px}
 #preferences .reference-setting{gap:16px;margin-top:16px;min-height:36px}
-#preferences .reference-setting input{flex-shrink:0;width:20px;height:20px;accent-color:#b36187}
+#preferences .reference-setting input{flex-shrink:0;width:36px;height:20px;color:var(--ink);accent-color:#b36187}
+#preferences .reference-setting input::before{top:3px;left:3px}
+#preferences .reference-setting input:checked::before{transform:translateX(16px)}
+#preferences .dialog-head{position:sticky;top:0;z-index:4;background:var(--surface);padding:10px 0;border-bottom:1px solid var(--line)}
 #settings-capture-status{font-weight:600}
 #preferences button{min-height:36px}

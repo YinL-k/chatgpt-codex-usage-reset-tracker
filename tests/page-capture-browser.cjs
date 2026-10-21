@@ -52,6 +52,10 @@ async function run(){
    await ui.locator('#page-reference-toggle').check();await ui.waitForFunction(()=>!settingState.pageDismissed);
    assert.ok(await ui.evaluate(()=>settingMessages.some(m=>m.type==='SC_RESTORE_PAGE')));assert.deepEqual(errors,[]);
    await ui.locator('#deduplicate-page-toggle').check();await ui.waitForFunction(()=>settingPrefs.deduplicatePage===true);
+   const fits=await ui.locator('#page-reference-toggle').evaluate(e=>{const knob=getComputedStyle(e,'::before');return e.clientWidth>=32&&parseFloat(knob.width)<=e.clientWidth-20;});assert.equal(fits,true,'switch thumb must fit its track');
+   await ui.locator('#preferences').evaluate(e=>e.scrollTop=e.scrollHeight);
+   assert.equal(await ui.locator('#close-settings').evaluate(e=>{const r=e.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}),true);
+   await ui.locator('#preferences').evaluate(e=>e.scrollTop=0);
    await ui.screenshot({path:path.join(out,`page-settings-${lang}-${theme}.png`)});await ui.close();
   }
   console.log('PASS: source mutation/code/table/control/title capture, bounded streaming, immediate snapshot, Page OFF capture stop, settings switches in EN/ZH and dark/light.');
