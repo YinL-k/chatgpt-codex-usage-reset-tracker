@@ -1,15 +1,19 @@
-# SakuraMeter 3.7.0.11 — Agent status below the Side Chat logo
+# SakuraMeter 3.7.0.12 — Side Chat reliability and window binding
 
-修正 Agent 状态悬浮窗位置：固定在顶部 Side Chat Logo 正下方，覆盖聊天内容，不再放在输入框上方，也不挤占聊天布局空间。
+- 修复带页面上下文发送时，文字与格式化上下文偶尔滞留输入框的问题；等待发送按钮就绪，未确认发送时恢复原始草稿并提示，避免自动重复发送。
+- 修复暂停页面上下文无反馈及重连后状态丢失；暂停停止读取网页和选区，新消息不附带这些内容。
+- 改善页面引用过期、刷新或发送后消失的恢复能力，保留明确的恢复入口。
+- 重新整理中英文设置，说明页面引用、去重和暂停的作用，修正开关及滚动时关闭按钮的显示。
+- 开场过渡结束后，粉色边缘光保持静止。
+- Side Chat 固定在显式打开它的浏览器窗口；通过另一窗口的扩展按钮或快捷键移动绑定。
+- 合并重复文案、消息发送、刷新和停止采集逻辑，清理无效判断与重复动画操作，保持现有业务行为。
 
-- 保留停止、确认、结果显示与 Activity；支持深浅主题、320px/420px 侧栏及增高输入框。
-- 包含 Chat 模式点击、Enter 和 Agent 切回 Chat 后的发送修复。
-- 保留 Agent Beta 的 JSON/XML 格式选择、网页操作和动作上限。
-
-验证：JSON/XML 本地浏览器循环、悬浮窗位置和传输回归通过；Chat 发送沿用此前真实登录 Chrome 的点击、回车、切换模式验证。
+验证：102 项 Node 回归测试、四组受控浏览器回归（发送恢复、页面采集与设置、静态光条与布局、Agent 传输）及发布工具检查通过。真实登录会话中的偶发现象和 Windows 原生跨窗口交互仍需实际使用确认。
 
 ## English
 
-Agent status now floats directly below the Side Chat logo at the top of the conversation, without consuming layout space. Stop, confirmation, results and Activity remain available. Local browser checks cover 320px/420px widths, a taller composer, and JSON/XML Agent loops and transport.
+Improves Side Chat sending reliability, pause persistence, page-reference recovery and single-window ownership. Settings now explain page inclusion, deduplication and pause clearly in English and Chinese. The pink edge glow remains static after the opening transition. Redundant strings and shared control logic were consolidated without changing business rules.
 
-Includes the Chat sending repair and Agent Beta with JSON/XML format selection and action limits. Signed-in Chrome previously verified click, Enter and sending after switching Agent back to Chat.
+Sending waits for the native button to become ready. If sending cannot be confirmed, the original draft is restored with a prompt to check the conversation before retrying; the extension does not automatically resend.
+
+Validation: 102 Node tests, four controlled browser regression suites and release-tooling checks passed. Intermittent behavior in real signed-in ChatGPT sessions and native Windows multi-window interactions still require field verification.
