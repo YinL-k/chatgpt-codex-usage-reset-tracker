@@ -12,7 +12,7 @@
   let queued=0,writing=false,editorLast=null,rawRoute=location.pathname,route=chatID()||'draft:'+crypto.randomUUID(),quickSend=null;
   let lastPrepared='',disposed=false,observer=null,recentRequest=null;
   const receipts=[],knownNodes=new WeakSet(),knownIDs=new Set();
-  const provisionalTTL=8000,receiptTTL=60000,quickSendTimeout=10000;
+  const provisionalTTL=8000,receiptTTL=60000,quickSendTimeout=10000,deliveryTimeout=10000;
   const NATIVE_STYLE_ID='sakura-sidechat-native-style',NATIVE_BAR_ID='sakura-sidechat-native-bar',NATIVE_BRAND_ID='sakura-native-brand-svg';
   const agent=globalThis.SakuraAgentTransport?.create({composer,read,sendButton:readyNativeSendButton,post:m=>post(m),
     present:(node,receipt)=>view.fold(node,receipt),
@@ -405,17 +405,26 @@
   }
   function deliver(r){
     if(pendingDelivery!==r)return;
+    clearTimeout(r.timer);cancelAnimationFrame(r.frame);
     syncRoute();
     if(disposed||r.route!==route||r.editor!==composer()||norm(read(r.editor))!==r.expectedNorm){cancelPending();return;}
-    const button=sendButton(r.editor);
-    if(disabled(button)){cancelPending();post({type:'SC_ERROR',key:'sendError'});return;}
-    pendingDelivery=null;clearTimeout(r.timer);cancelAnimationFrame(r.frame);receipts.push(r);if(receipts.length>30)receipts.shift();
+    if(nativeIsGenerating(r.editor)){cancelPending();post({type:'SC_ERROR',key:'selectionBusy'});return;}
+    const button=readyNativeSendButton(r.editor);
+    // React may disable or replace Send while committing a long reference.
+    // Wait for a stable, visible native control; never click Stop or auto-retry
+    // after a click (the server may already have accepted that message).
+    if(!button||r.readyButton!==button){r.readyButton=button;r.readyAt=Date.now();}
+    if(!button||Date.now()-r.readyAt<160){
+      if(Date.now()-r.at>=deliveryTimeout){cancelPending();post({type:'SC_ERROR',key:'sendError'});return;}
+      r.timer=setTimeout(()=>deliver(r),100);return;
+    }
+    pendingDelivery=null;r.clickedAt=Date.now();receipts.push(r);if(receipts.length>30)receipts.shift();
     delivering=true;try{button.click();}finally{delivering=false;}
     schedule();
   }
   function setPageReference(value){
     cancelPending();clearPageLedger();
-    if(value){dismissedSource='';pageDismissed=false;post({type:'SC_RESTORE_PAGE'});}
+    if(value){dismissedSource='';pageDismissed=false;post({type:'SC_RESTORE_PAGE',pageIdentity:captureSource});}
     else{dismissedSource=captureSource;pageDismissed=true;const id=context?.id;if(context)context={...context,page:null};post({type:'SC_DISMISS_PAGE',id,pageIdentity:captureSource});}
     rebuild();render();
   }
@@ -434,7 +443,7 @@
     event.preventDefault();event.stopImmediatePropagation();
     if(pendingSend)return;
     const id=crypto.randomUUID(),request={id,editor:el,question,route,source:captureSource,cancelled:false};
-    pendingSend=request;request.timer=setTimeout(()=>completeSnapshot({requestId:id,ok:false}),2000);
+    pendingSend=request;request.timer=setTimeout(()=>completeSnapshot({requestId:id,ok:false}),5000);
     post({type:'SC_ENSURE_PAGE',requestId:id,pageIdentity:captureSource});
   }
   function sendSelectionOnly(){
@@ -491,7 +500,7 @@
     ensureNativeBar();
     syncScrollbarBoundary();
     if(!port)return;
-    view.update(context,theme,pageDismissed);
+    view.update(context,theme,pageDismissed,{status:captureStatus,source:captureSource});
     const el=composer();
     const status=JSON.stringify({type:'SC_STATUS',ready:!!el,hasDraft:!!read(el).trim(),url:location.origin+location.pathname});
     if(status!==statusLast){statusLast=status;post(JSON.parse(status));}
@@ -506,10 +515,10 @@
     const el=composer(),question=read(el);
     if(!el||!question.trim()||disabled(sendButton(el)))return; // Never override ChatGPT's generation/IME controls.
     syncRoute();rebuild();
-    if(!replaying&&!pageDismissed&&captureSource&&captureStatus==='ready'){checkSnapshot(event,el,question);return;}
     // Capture -> native submit is one event chain. A user retry of the same
     // rewritten draft also proceeds unchanged, with no duplicate wrapper.
-    if(receipts.some(r=>r.route===route&&!r.observed&&!r.consumed&&r.editor===el&&r.expectedNorm===norm(question)))return;
+    if(receipts.some(r=>r.route===route&&!r.observed&&!r.failed&&r.editor===el&&r.expectedNorm===norm(question)))return;
+    if(!replaying&&!pageDismissed&&captureSource&&captureStatus==='ready'){checkSnapshot(event,el,question);return;}
     const now=Date.now(),valid=K.validContext(context);
     const selected=valid?K.selectionKey(context):'';
     const selectionInFlight=selected&&receipts.some(r=>r.route===route&&!r.failed&&r.selectionKey===selected&&(r.observed||now-r.at<provisionalTTL));
@@ -596,6 +605,14 @@
           knownNodes.add(n);accept(r,n);break;
         }
       }
+      if(r.clickedAt&&!r.observed&&!r.failed&&!(r.request?.at>=r.clickedAt)&&now-r.clickedAt>=deliveryTimeout&&
+         r.editor===composer()&&norm(read(r.editor))===r.expectedNorm&&!nativeIsGenerating(r.editor)){
+        // A click with no delivery evidence must not strand the XML wrapper in
+        // the editor. Restore only our untouched draft; never overwrite edits.
+        r.failed=true;r.consumed=true;
+        try{writing=true;setText(r.editor,r.question);}catch{}finally{writing=false;}
+        post({type:'SC_ERROR',key:'deliveryUnconfirmed'});
+      }
       if(r.observed){
         // React can replace a message node. Reattach only with our own known marker.
         if(!r.node?.isConnected&&r.marker){r.node=candidates.find(n=>(n.textContent||'').includes(r.marker))||r.node;view.fold(r.node,r);}
@@ -625,11 +642,13 @@
       if(m && agent?.receive(m))return;
       if(m?.type==='SC_PAGE_SNAPSHOT_RESULT'){completeSnapshot(m);return;}
       if(m?.type==='SC_PAGE_REFERENCE'){setPageReference(m.value===true);return;}
+      if(m?.type==='SC_PAGE_STATE'){cancelPending();dismissedSource=m.value?'':captureSource;pageDismissed=!m.value;if(pageDismissed&&context)context={...context,page:null};clearPageLedger();rebuild();render();return;}
+      if(m?.type==='SC_PING'){post({type:'SC_PONG'});return;}
       if(m?.type==='SC_FORGET_PAGE'){clearPageLedger();return;}
       if(m?.type!=='SC_UPDATE')return;
       const nextDedupe=m.deduplicatePage!==false;if(nextDedupe!==deduplicatePage){deduplicatePage=nextDedupe;clearPageLedger();cancelPending();}
       const nextSource=m.source?.pageIdentity||m.source?.url||'';if(captureSource!==nextSource)cancelPending();
-      if(m.pageDismissed&&!pageDismissed)cancelPending();
+      if(m.pageDismissed&&!pageDismissed||m.captureStatus==='paused'||m.captureStatus==='bound-elsewhere')cancelPending();
       captureSource=m.source?.pageIdentity||m.source?.url||'';
       if(dismissedSource && captureSource!==dismissedSource)dismissedSource='';
       pageDismissed=!!m.pageDismissed||!!dismissedSource;

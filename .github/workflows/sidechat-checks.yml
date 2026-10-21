@@ -1,0 +1,40 @@
+name: Side Chat regression
+on:
+  pull_request:
+    paths:
+      - 'sidechat/**'
+      - 'tests/**'
+      - '.github/workflows/sidechat-checks.yml'
+  push:
+    branches: ['fix/sidechat-reliability-window-scope']
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm install --prefix tests --ignore-scripts --no-package-lock
+      - run: npm test --prefix tests
+      - run: npx --prefix tests playwright install --with-deps chrome
+      - name: Reference send and recovery
+        run: node tests/reference-send-browser.cjs
+      - name: Page capture and settings
+        if: success() || failure()
+        run: node tests/page-capture-browser.cjs
+      - name: Static ambient and layout
+        if: success() || failure()
+        run: node tests/sidechat-visual-browser.cjs
+      - name: Agent transport compatibility
+        if: success() || failure()
+        run: node tests/agent-transport-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sidechat-browser-screenshots
+          path: tests/artifacts/
+          if-no-files-found: ignore

@@ -13,6 +13,12 @@ async function run(){
   });
   for(const file of ['sidechat/extractor.js','sidechat/page-context.js'])await p.addScriptTag({path:path.join(root,file)});
   await p.waitForFunction(()=>captures.length>0);
+  const initial=await p.evaluate(()=>captures.length);
+  await p.evaluate(()=>command({type:'SC_PAGE_START'}));
+  await p.waitForFunction(n=>captures.length>n,initial);
+  // An unchanged page must republish after its acknowledgement lease expires.
+  const heartbeatBefore=await p.evaluate(()=>{const real=Date.now;Date.now=()=>real()+61000;return captures.length;});
+  await p.waitForFunction(n=>captures.length>n,heartbeatBefore,{timeout:6500});
   const prior=await p.evaluate(()=>captures.length);
   await p.evaluate(()=>{document.querySelector('#body').textContent='New body';document.querySelector('#code').textContent='await fetch(url)';document.querySelector('#cell').textContent='New cell';document.title='New title';});
   await p.waitForFunction(n=>captures.length>n,prior);
@@ -29,16 +35,18 @@ async function run(){
   await p.close();
   // Actual settings DOM and handlers, with only the extension port mocked.
   for(const lang of ['en','zh'])for(const theme of ['dark','light']){
-   const ui=await browser.newPage();await ui.addInitScript(({lang,theme})=>{
+   const ui=await browser.newPage({viewport:{width:380,height:800}});await ui.addInitScript(({lang,theme})=>{
     window.settingMessages=[];window.settingPrefs={enabled:true};
     window.settingState={windowId:1,enabled:true,embedAllowed:false,status:'ready',pageDismissed:false,deduplicatePage:true,source:{tabId:1,pageIdentity:'https://example.com/',url:'https://example.com/',title:'Source'},context:{id:'ctx',page:{text:'Body'},selection:{text:'word'},source:{title:'Source'}}};
     let listener;const emit=()=>queueMicrotask(()=>listener({type:'SC_STATE',state:structuredClone(settingState)}));
     localStorage.setItem('gptTrackerTheme',theme);
-    window.chrome={runtime:{id:'test',getURL:p=>location.origin+'/'+p,connect:()=>({onMessage:{addListener:f=>listener=f},onDisconnect:{addListener(){}},postMessage:m=>{settingMessages.push(m);if(m.type==='SC_DISMISS_PAGE'){settingState.pageDismissed=true;settingState.context.page=null;}if(m.type==='SC_RESTORE_PAGE')settingState.pageDismissed=false;if(m.type==='SC_PAGE_PREFS'){settingPrefs.deduplicatePage=m.deduplicatePage;settingState.deduplicatePage=m.deduplicatePage;}emit();}})},windows:{getCurrent:async()=>({id:1})},storage:{sync:{get:async()=>({gptTrackerLang:lang}),set:async()=>{}},local:{get:async()=>({__sakuraSidePrefsV1:settingPrefs}),set:async()=>{}},onChanged:{addListener(){}}},tabs:{create:async()=>{}}};
+    window.chrome={runtime:{id:'test',getURL:p=>location.origin+'/'+p,connect:()=>({onMessage:{addListener:f=>listener=f},onDisconnect:{addListener(){}},postMessage:m=>{settingMessages.push(m);if(m.type==='SC_DISMISS_PAGE'){settingState.pageDismissed=true;settingState.context.page=null;}if(m.type==='SC_RESTORE_PAGE')settingState.pageDismissed=false;if(m.type==='SC_PAUSE'){settingState.paused=m.value;settingState.status=m.value?'paused':'ready';}if(m.type==='SC_PAGE_PREFS'){settingPrefs.deduplicatePage=m.deduplicatePage;settingState.deduplicatePage=m.deduplicatePage;}emit();}})},windows:{getCurrent:async()=>({id:1})},storage:{sync:{get:async()=>({gptTrackerLang:lang}),set:async()=>{}},local:{get:async()=>({__sakuraSidePrefsV1:settingPrefs}),set:async()=>{}},onChanged:{addListener(){}}},tabs:{create:async()=>{}}};
    },{lang,theme});
    const errors=[];ui.on('pageerror',e=>errors.push(e.message));await ui.goto(base+'/sidechat/panel.html');
    await ui.locator('#settings').evaluate(el=>el.click());
    assert.equal(await ui.locator('#page-reference-toggle').isChecked(),true);assert.equal(await ui.locator('#deduplicate-page-toggle').isChecked(),true);
+   await ui.locator('#settings-pause').click();await ui.waitForFunction(()=>settingState.paused===true);assert.equal(await ui.locator('#settings-pause').getAttribute('aria-pressed'),'true');
+   await ui.locator('#settings-pause').click();await ui.waitForFunction(()=>settingState.paused===false);assert.equal(await ui.locator('#settings-pause').getAttribute('aria-pressed'),'false');
    await ui.locator('#page-reference-toggle').uncheck();await ui.waitForFunction(()=>settingState.pageDismissed);assert.equal(await ui.evaluate(()=>settingState.context.selection.text),'word');
    await ui.locator('#deduplicate-page-toggle').uncheck();await ui.waitForFunction(()=>settingPrefs.deduplicatePage===false);
    await ui.locator('#page-reference-toggle').check();await ui.waitForFunction(()=>!settingState.pageDismissed);

@@ -8,6 +8,6 @@
   button.addEventListener('click', () => {
     if (windowId === null) return;
     // Invoke in the click handler, not after an unrelated async task.
-    chrome.sidePanel.open({ windowId }).then(() => window.close()).catch(() => { button.title = 'Open chrome://extensions/shortcuts and assign Side Chat a shortcut.'; });
+    chrome.runtime.sendMessage({type:'SC_BIND_WINDOW',windowId}).then(result=>{if(!result?.ok)throw Error('window_binding_failed');return chrome.sidePanel.open({windowId});}).then(() => window.close()).catch(() => { button.title = 'Open chrome://extensions/shortcuts and assign Side Chat a shortcut.'; });
   });
 })();

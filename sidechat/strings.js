@@ -69,5 +69,29 @@
   Object.assign(zh,{captureNote:'仅在侧边栏打开时读取已渲染网页内容，不读取密码或表单输入值。Selection 始终是明确目标。',pageReferenceLabel:'Page reference',deduplicatePageLabel:'Deduplicate page',pageReferenceNote:'开启时持续引用当前网页；关闭不影响 Selection。',deduplicatePageNote:'省略重复页面内容；页面变化会更新引用，在下一条消息中附带。',freshnessError:'未能读取最新网页快照，草稿已保留，请重试发送。',quoteNote:'网页会持续引用，直到你关闭它。未变化的内容可沿用已发送引用；Selection 始终是明确目标。'});
   Object.assign(en,{sendSelection:'Send selection',selectionPrompt:'Explain the selected text.',selectionBusy:'Wait for the current response to finish before sending a selection.',selectionWaiting:'Waiting for ChatGPT to allow sending…',selectionSendTimeout:'ChatGPT did not enable sending in time. Your prepared draft is still here; send it manually when available.'});
   Object.assign(zh,{sendSelection:'发送选区',selectionPrompt:'解释我选中的内容。',selectionBusy:'当前回答尚未结束，请完成或停止生成后再发送选区。',selectionWaiting:'等待 ChatGPT 恢复发送…',selectionSendTimeout:'ChatGPT 的发送按钮仍不可用，已保留草稿；按钮恢复后可手动发送。'});
+  Object.assign(en,{
+    captureLabel:'Page context',captureActive:'On · reading this window’s current page',
+    captureNote:'Pause stops reading the page and highlights. Your next messages will not attach them. Resume reads the current page again.',
+    pageReferenceLabel:'Include the current page',pageReferenceNote:'Attach page text when sending. Turn this off to send only your question and any selected text.',
+    deduplicatePageLabel:'Skip unchanged page text',deduplicatePageNote:'On: reuse page text already sent in this conversation. Off: attach it again with every message.',
+    windowLabel:'Browser window',windowNote:'Side Chat stays in the window where you opened it. To move it, use the extension’s Side Chat button or Alt + Shift + C in another window.',
+    boundElsewhere:'Side Chat is attached to another browser window. Use the extension’s Side Chat button or Alt + Shift + C here to move it to this window.',
+    appearanceLabel:'Appearance',staticGlowNote:'The pink edge glow is static after the opening transition. Theme and language are available in the top menu.',
+    deliveryUnconfirmed:'Sending was not confirmed. Your original draft has been restored. Check the conversation before sending again.',
+    sendError:'ChatGPT was not ready to send. Your original draft is kept; try again.',
+    reload:'Reload ChatGPT (keeps page settings)',refreshContext:'Read the current page again'
+  });
+  Object.assign(zh,{
+    captureLabel:'页面上下文',captureActive:'已开启 · 正在读取本窗口的当前网页',
+    captureNote:'暂停后停止读取网页和划选文字，新消息不再附带这些内容。恢复后重新读取当前网页。',
+    pageReferenceLabel:'发送时附带当前网页',pageReferenceNote:'关闭后只发送你的问题和划选文字，不附带整页内容。',
+    deduplicatePageLabel:'省略未变化的网页内容',deduplicatePageNote:'开启：沿用本次对话中已发送的网页内容。关闭：每条消息都重新附带。',
+    windowLabel:'浏览器窗口',windowNote:'侧边聊天固定在打开它的窗口。在其他窗口点击扩展中的“侧边聊天”或按 Alt + Shift + C，可将它移到该窗口。',
+    boundElsewhere:'侧边聊天已绑定其他浏览器窗口。在此窗口点击扩展中的“侧边聊天”或按 Alt + Shift + C，可将它移到这里。',
+    appearanceLabel:'外观',staticGlowNote:'开场过渡结束后，粉色边缘光保持静止。主题和语言可在顶部菜单中切换。',
+    deliveryUnconfirmed:'尚未确认发送成功，已恢复你的原始草稿。请先检查对话，再决定是否重发。',
+    sendError:'ChatGPT 尚未准备好发送，原始草稿已保留，请重试。',
+    reload:'重新加载 ChatGPT（保留页面设置）',refreshContext:'重新读取当前网页'
+  });
   globalThis.SakuraSideStrings = { en, zh };
 })();
