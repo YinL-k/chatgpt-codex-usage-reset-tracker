@@ -11,6 +11,10 @@
   const ownedUI = s => s.id === chrome.runtime.id && s.url === chrome.runtime.getURL('sidechat/panel.html');
   const ownedPage = s => s.id === chrome.runtime.id && !!s.tab && K.captureAllowed(s.url);
   const messageTab = (id, m) => chrome.tabs.sendMessage(id, m).catch(() => null);
+  async function stopCapture(tabId) {
+    await messageTab(tabId, { type: 'SC_CAPTURE_STOP' });
+    await messageTab(tabId, { type: 'SC_PAGE_STOP' });
+  }
   const persist = () => { persistQueue = persistQueue.then(() => chrome.storage.session.set({ [SESSION]: store.list(), [SESSION+'Dismissed']: [...dismissed], [SESSION+'Paused']: [...paused], [SESSION+'Window']: ownerWindowId })).catch(() => {}); return persistQueue; };
   function post(port, message) { try { port.postMessage(message); } catch {} }
   async function bindWindow(windowId,claimOnly=false){
@@ -27,10 +31,8 @@
     });
     return ownerQueue;
   }
-  async function hasEmbed() { return true; }
   function setRules() {
     rulesQueue = rulesQueue.catch(() => {}).then(async () => {
-      if (!await hasEmbed()) return false;
       const addRules = panels.size ? [{ id: RULE, priority: 1,
         action: { type: 'modifyHeaders', responseHeaders: [
           { header: 'x-frame-options', operation: 'remove' }, { header: 'frame-options', operation: 'remove' }, { header: 'content-security-policy', operation: 'remove' }
@@ -60,13 +62,11 @@
     if (generations.get(windowId) !== epoch || panels.get(windowId) !== port) return;
     const previous = activeTabs.get(windowId);
     if (previous != null && previous !== tab?.id) {
-      await messageTab(previous, { type: 'SC_CAPTURE_STOP' });
-      await messageTab(previous, { type: 'SC_PAGE_STOP' });
+      await stopCapture(previous);
     }
     activeTabs.set(windowId, tab?.id);
     const supported = !!tab && K.captureAllowed(tab.url), pattern = K.originPattern(tab?.url);
     const permitted = supported && await chrome.permissions.contains({ origins: [pattern] });
-    const embedAllowed = await hasEmbed();
     const prefs = (await chrome.storage.local.get('__sakuraSidePrefsV1')).__sakuraSidePrefsV1 || {};
     const bound=windowId===ownerWindowId;
     const enabled = bound && !paused.has(windowId) && prefs.enabled === true;
@@ -76,14 +76,11 @@
     if(context && dismissed.has(tab.id)) context={...context,page:null};
     if (context && context.source.tabUrl !== K.pageURL(tab.url)) { store.clear(tab.id); context = null; void persist(); }
     if (generations.get(windowId) !== epoch || panels.get(windowId) !== port) return;
-    post(port, { type: 'SC_STATE', state: { windowId, status, embedAllowed: bound && embedAllowed, enabled: bound && prefs.enabled === true,
+    post(port, { type: 'SC_STATE', state: { windowId, status, embedAllowed: bound, enabled: bound && prefs.enabled === true,
       deduplicatePage:prefs.deduplicatePage!==false, pageDismissed: !!tab && dismissed.has(tab.id), paused: paused.has(windowId), source: tab ? { tabId: tab.id, pageIdentity:tab.url, title: K.clean(tab.title), url: K.pageURL(tab.url), pattern } : null,
       context: enabled && permitted ? context : null } });
     if (status !== 'ready') {
-      if (tab) {
-        await messageTab(tab.id, { type: 'SC_CAPTURE_STOP' });
-        await messageTab(tab.id, { type: 'SC_PAGE_STOP' });
-      }
+      if (tab) await stopCapture(tab.id);
       return;
     }
     if (!inject) return;
@@ -95,8 +92,7 @@
         await messageTab(tab.id, { type: 'SC_CAPTURE_START' });
         await messageTab(tab.id, { type: dismissed.has(tab.id)?'SC_PAGE_STOP':'SC_PAGE_START' });
       } else {
-        await messageTab(tab.id, { type: 'SC_CAPTURE_STOP' });
-        await messageTab(tab.id, { type: 'SC_PAGE_STOP' });
+        await stopCapture(tab.id);
       }
     } catch { post(port, { type: 'SC_ERROR', error: 'page_unavailable' }); }
   }
@@ -116,10 +112,7 @@
     if (panels.get(windowId) !== port) return;
     panels.delete(windowId); generations.delete(windowId);
     const tabId = activeTabs.get(windowId); activeTabs.delete(windowId);
-    if (tabId != null) {
-      await messageTab(tabId, { type: 'SC_CAPTURE_STOP' });
-      await messageTab(tabId, { type: 'SC_PAGE_STOP' });
-    }
+    if (tabId != null) await stopCapture(tabId);
     await initialized;if(panels.has(windowId))return;store.clearWindow(windowId); await persist();
     await setRules().catch(() => {});
   }

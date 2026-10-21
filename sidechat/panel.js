@@ -4,7 +4,7 @@
   let lang = 'en', theme = 'dark', state = null, lifecycle = null, bridge = null, bridgeID = '', frameLoaded = false, hasDraft = false;
   let frameReady = false, connected = false, lastWorkerMessage=0,lastFrameMessage=0;
   const pendingCommands=[];
-  const agent = SakuraAgentUI.create({enabled:()=>!!state?.enabled,windowId:()=>windowId,send:m=>{try{bridge?.postMessage(m);}catch{}}});
+  const agent = SakuraAgentUI.create({enabled:()=>!!state?.enabled,windowId:()=>windowId,send:postFrame});
   let windowId = null, disposed = false, reconnectTimer = 0, heartbeat = 0, helpTimer = 0, toastTimer = 0, transitionTimer = 0, previewFadeTimer = 0, revealFallbackTimer = 0, lastChatURL = 'https://chatgpt.com/';
   let chatVisible = false, pendingChatReveal = false, ambientHandoffAnimations = [];
   // Sample once per panel opening; normal renders must never move the lights.
@@ -22,11 +22,12 @@
     });
   }
   const t = key => SakuraSideStrings[lang]?.[key] || SakuraSideStrings.en[key] || key;
+  function postFrame(message) { try { bridge?.postMessage(message); } catch {} }
   function post(m) {
     if(connected&&lifecycle){try{lifecycle.postMessage(m);return;}catch{const old=lifecycle;lifecycle=null;connected=false;try{old.disconnect();}catch{}}}
     if(m.type==='SC_PING')return;
     if(m.type==='SC_ENSURE_PAGE'){
-      try{bridge?.postMessage({type:'SC_PAGE_SNAPSHOT_RESULT',requestId:m.requestId,ok:false});}catch{}
+      postFrame({type:'SC_PAGE_SNAPSHOT_RESULT',requestId:m.requestId,ok:false});
       return;
     }
     // Queue explicit settings changes while the service worker reconnects.
@@ -36,7 +37,7 @@
     if(!lifecycle)connect();
   }
   function tellFrame() {
-    try { bridge?.postMessage({ type: 'SC_UPDATE', context: connected&&!state?.paused ? state?.context || null : null, pageDismissed:state?.pageDismissed, source:state?.source, deduplicatePage:state?.deduplicatePage!==false, theme, lang, captureStatus: !connected||state?.paused ? 'paused' : state?.status || '', labels: SakuraSideStrings[lang] }); } catch {}
+    postFrame({ type: 'SC_UPDATE', context: connected&&!state?.paused ? state?.context || null : null, pageDismissed:state?.pageDismissed, source:state?.source, deduplicatePage:state?.deduplicatePage!==false, theme, lang, captureStatus: !connected||state?.paused ? 'paused' : state?.status || '', labels: SakuraSideStrings[lang] });
   }
   function applyLanguage() {
     agent.language(lang);
@@ -61,7 +62,7 @@
       const current=chrome.runtime.connect({ name: 'SC_PANEL_LIFETIME' });lifecycle=current;lastWorkerMessage=Date.now();
       current.onMessage.addListener(m => {
         if(lifecycle!==current)return;lastWorkerMessage=Date.now();
-        if (m.type === 'SC_PAGE_SNAPSHOT_RESULT') { try { bridge?.postMessage(m); } catch {} }
+        if (m.type === 'SC_PAGE_SNAPSHOT_RESULT') postFrame(m);
         if (m.type === 'SC_STATE') { if(m.state.status==='bound-elsewhere'&&state?.enabled)void agent.stop();state = m.state; connected = true;for(const command of pendingCommands.splice(0))post(command);render();tellFrame(); }
         if (m.type === 'SC_ERROR') toast(({ selection_too_long:'tooLong', page_unavailable:'unavailable' })[m.error] || 'connectionError');
       });
@@ -76,7 +77,7 @@
         post({type:'SC_PING'});
         if(bridge){
           if(Date.now()-lastFrameMessage>45000){const oldID=bridgeID;bridgeID='';connectFrame(oldID);}
-          else try{bridge.postMessage({type:'SC_PING'});}catch{}
+          else postFrame({type:'SC_PING'});
         }
       },20000);
     } catch { lifecycle=null;reconnectTimer = setTimeout(connect, 1500); }
@@ -136,7 +137,7 @@
     clearTimeout(helpTimer);
     helpTimer = setTimeout(() => { if (chatVisible) $('load-help').hidden = false; }, 15000);
   }
-  function cancelAmbientHandoff({ resumePreview = false } = {}) {
+  function cancelAmbientHandoff() {
     for (const animation of ambientHandoffAnimations.splice(0)) {
       try { animation.cancel(); } catch {}
     }
@@ -156,7 +157,6 @@
       el.style.removeProperty('transform');
       el.style.removeProperty('will-change');
     }
-    if (resumePreview) for (const el of flow) el.style.removeProperty('animation');
   }
   function startAmbientHandoff() {
     cancelAmbientHandoff();
@@ -200,7 +200,7 @@
   function showPreview() {
     clearTimeout(transitionTimer); transitionTimer = 0;
     clearTimeout(previewFadeTimer); previewFadeTimer = 0;
-    cancelAmbientHandoff({ resumePreview: true });
+    cancelAmbientHandoff();
     document.body.classList.remove('sm-enter-chat','sm-content-reveal');
     document.body.dataset.sideStage = 'preview';
     chatVisible = false;
@@ -266,12 +266,16 @@
     lastChatURL = url; syncChatSurface(url); frame.src = url;
     helpTimer = setTimeout(() => { if (chatVisible) $('load-help').hidden = false; }, 15000);
   }
+  function refreshContext() {
+    post({ type: 'SC_REFRESH', force: true });
+    postFrame({ type: 'SC_FORGET_PAGE' });
+  }
   window.addEventListener('message', event => {
     if (event.source !== frame.contentWindow || event.origin !== 'https://chatgpt.com' || event.data?.source !== 'SAKURA_SIDECHAT_FRAME') return;
     if (event.data?.type === 'SC_UI_ACTION') {
       const action = event.data.action;
       if (action === 'dismiss-popovers') { closePopovers(); return; }
-      if (action === 'refresh') { post({ type: 'SC_REFRESH', force: true }); try { bridge?.postMessage({type:'SC_FORGET_PAGE'}); } catch {} }
+      if (action === 'refresh') refreshContext();
       else if (action === 'more') { const show = $('more-menu').hidden; closePopovers(); $('more-menu').hidden = !show; $('more').setAttribute('aria-expanded',String(show)); }
       else if (action === 'status') { const show = $('status-popover').hidden; closePopovers(); $('status-popover').hidden = !show; $('status').setAttribute('aria-expanded',String(show)); }
       return;
@@ -300,9 +304,7 @@
         try { const u = new URL(m.url); if (u.origin === 'https://chatgpt.com') { lastChatURL = u.origin + u.pathname; syncChatSurface(lastChatURL); } } catch {}
       } else if (m.type === 'SC_CLEAR') post({ type: 'SC_CLEAR', id: m.id, selectionKey: m.selectionKey });
       else if (m.type === 'SC_DISMISS_PAGE' || m.type === 'SC_RESTORE_PAGE') { if(state && m.type==='SC_DISMISS_PAGE'){state.pageDismissed=true;if(state.context)state.context={...state.context,page:null};}post(m); }
-      else if (m.type === 'SC_ENSURE_PAGE') post(m);
-      else if (m.type === 'SC_CONTEXT_USED') post(m);
-      else if (m.type === 'SC_SENT') post(m);
+      else if (['SC_ENSURE_PAGE','SC_CONTEXT_USED','SC_SENT'].includes(m.type)) post(m);
       else if (m.type === 'SC_ERROR') toast(m.key || 'sendError');
     };
     bridge.start(); frame.contentWindow.postMessage({ source: 'SAKURA_SIDECHAT_PANEL', type: 'SC_CONNECT', bridgeID: id }, 'https://chatgpt.com', [channel.port2]); tellFrame(); agent.sync();
@@ -354,7 +356,7 @@
   $('grant-all').addEventListener('click', () => void grant('all'));
   $('usage').addEventListener('click', () => chrome.tabs.create({ url: chrome.runtime.getURL('heatmap.html') }));
   $('new-chat').addEventListener('click', () => loadChat('https://chatgpt.com/'));
-  $('refresh-context').addEventListener('click', () => { post({ type: 'SC_REFRESH', force: true }); try { bridge?.postMessage({type:'SC_FORGET_PAGE'}); } catch {} });
+  $('refresh-context').addEventListener('click', refreshContext);
   $('reload').addEventListener('click', () => loadChat(lastChatURL));
   for (const id of ['external','login']) $(id).addEventListener('click', () => chrome.tabs.create({ url: lastChatURL }));
   for (const id of ['pause','settings-pause']) $(id).addEventListener('click', () => {
@@ -368,7 +370,7 @@
   $('page-reference-toggle').addEventListener('change',e=>{
     const value=e.target.checked;
     if(state){state.pageDismissed=!value;if(!value&&state.context)state.context={...state.context,page:null};}
-    try{bridge?.postMessage({type:'SC_PAGE_STATE',value});}catch{}
+    postFrame({type:'SC_PAGE_STATE',value});
     post({type:value?'SC_RESTORE_PAGE':'SC_DISMISS_PAGE',id:state?.context?.id,pageIdentity:state?.source?.pageIdentity});
     render();
   });
