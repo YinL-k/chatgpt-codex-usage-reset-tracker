@@ -52,6 +52,8 @@ Dedicated browser/fixture scripts are under [tests/](../tests/), including page/
 
 The release workflow validates a matching manifest version and tag, builds one ZIP, verifies its digest before the GitHub Release, then submits the same package to separately gated Chrome and Edge jobs. Store review/approval and actual rollout are **not** established by a GitHub Release or an upload/submit job succeeding.
 
+**Historical review-queue incident (maintainer clarification, 2026-11-15):** The GitHub Actions release run for `v3.7.0.12` on 2026-10-21 produced a valid GitHub Release, and the Edge submission job succeeded; the Chrome submission job returned HTTP 400. The project maintainer has since confirmed that an earlier Chrome version was still pending review and that the Chrome and Edge reviews have now cleared, with the end-to-end publishing workflow usable. The October 21 failed job remains a historical CI record; it should **not** be presented as an ongoing defect or a need to redesign the release pipeline. The review outcome is maintainer-reported, not independently verified here through the store dashboards.
+
 See [STORE-PUBLISHING.md](../STORE-PUBLISHING.md) for the operational workflow and [releases](https://github.com/YinL-k/chatgpt-codex-usage-reset-tracker/releases) for published GitHub artifacts. Do not run publishing/review-cancellation operations as part of a portfolio demonstration.
 
 ## Suggested demo sequence
