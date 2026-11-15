@@ -16,6 +16,8 @@
 >
 > **Important:** Global reset forecasts are **not** an official OpenAI schedule or your personal quota reset countdown. SakuraMeter **cannot reset your quota**.
 
+**Engineering case study:** [Architecture, design decisions, tests, and release safeguards](docs/ENGINEERING_CASE_STUDY.md). This source-grounded overview distinguishes implementation evidence from production and store-review claims.
+
 ## What can SakuraMeter do for you?
 
 | Your question | What you get |
