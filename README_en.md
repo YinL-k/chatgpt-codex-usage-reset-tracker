@@ -10,6 +10,10 @@
 [![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-Install-4285F4?logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/hnajkeiigdkgafcobbkchpcdafddfpki)
 [![Chrome 116+](https://img.shields.io/badge/Chrome-116%2B-666)](manifest.json)
 
+<div align="center">
+<img src="https://raw.githubusercontent.com/YinL-k/chatgpt-codex-usage-reset-tracker/main/store-assets/en/preview/large-promotional.jpg?v=20261119" alt="SakuraMeter product preview" width="820" />
+</div>
+
 **[Install from Chrome Web Store](https://chromewebstore.google.com/detail/hnajkeiigdkgafcobbkchpcdafddfpki)** · **[Download the latest release](https://github.com/YinL-k/chatgpt-codex-usage-reset-tracker/releases/latest)** · **[Report a bug / Request a feature](https://github.com/YinL-k/chatgpt-codex-usage-reset-tracker/issues)**
 
 > **See your ChatGPT and Codex usage without digging through account pages.** SakuraMeter combines locally recorded ChatGPT activity, available Codex usage windows and reset timestamps, and experimental third-party forecasts of global Codex resets. It uses your existing signed-in ChatGPT session; no API key is required.
@@ -68,10 +72,6 @@ Forecast data credits: [Codex Reset](https://codex-reset.com/) and [LunarWerx](h
 **Updating an existing unpacked install:** Back up your original extension directory and export activity data first. Replace files in the **same loaded directory**, then reload from the extension manager. **Do not uninstall first.** Loading from a different directory can change the extension ID and isolate your stored data. Activity JSON exports do not include manual plans or calibration values. See the [Chinese installation guide](INSTALL-中文.md) for additional notes.
 
 ## Screenshots
-
-<div align="center">
-<img src="https://raw.githubusercontent.com/YinL-k/chatgpt-codex-usage-reset-tracker/main/store-assets/en/preview/large-promotional.jpg?v=20261119" alt="SakuraMeter product preview" width="820" />
-</div>
 
 Screenshots show SakuraMeter 3.7.0.12 with demo data. Click any image to view it at full size.
 
