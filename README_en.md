@@ -73,20 +73,49 @@ Forecast data credits: [Codex Reset](https://codex-reset.com/) and [LunarWerx](h
 <img src="https://raw.githubusercontent.com/YinL-k/chatgpt-codex-usage-reset-tracker/main/store-assets/en/preview/large-promotional.jpg?v=20261119" alt="SakuraMeter product preview" width="820" />
 </div>
 
-<details>
-<summary><strong>Show six screenshots (dark and light themes)</strong></summary>
+Screenshots show SakuraMeter 3.7.0.12 with demo data. Click any image to view it at full size.
 
-| Popup | Popup |
-| :---: | :---: |
-| <img src="store-assets/en/preview/01-popup-dark.jpg" alt="Popup dark theme" width="390" /> | <img src="store-assets/en/preview/02-popup-light.jpg" alt="Popup light theme" width="390" /> |
-| Overview | Overview |
-| <img src="store-assets/en/preview/03-overview-dark.jpg" alt="Overview dark theme" width="390" /> | <img src="store-assets/en/preview/04-overview-light.jpg" alt="Overview light theme" width="390" /> |
-| Activity | Activity |
-| <img src="store-assets/en/preview/05-activity-dark.jpg" alt="Activity dark theme" width="390" /> | <img src="store-assets/en/preview/06-activity-light.jpg" alt="Activity light theme" width="390" /> |
+**Activity**
+
+<a href="assets/readme/activity-light.webp"><img src="assets/readme/activity-light.webp" alt="Activity (light theme)" width="820" /></a>
+
+<details>
+<summary><strong>More light-theme screenshots</strong></summary>
+
+**Overview**
+
+<a href="assets/readme/overview-light.webp"><img src="assets/readme/overview-light.webp" alt="Overview (light theme)" width="820" /></a>
+
+**Usage and resets**
+
+<a href="assets/readme/usage-light.webp"><img src="assets/readme/usage-light.webp" alt="Usage and resets (light theme)" width="820" /></a>
+
+**Extension popup**
+
+<a href="assets/readme/popup-light.webp"><img src="assets/readme/popup-light.webp" alt="Extension popup (light theme)" width="355" /></a>
 
 </details>
 
-Screenshots may show an earlier UI. Refer to the relevant release and installed extension for current behavior.
+<details>
+<summary><strong>Dark-theme screenshots</strong></summary>
+
+**Activity**
+
+<a href="assets/readme/activity-dark.webp"><img src="assets/readme/activity-dark.webp" alt="Activity (dark theme)" width="820" /></a>
+
+**Overview**
+
+<a href="assets/readme/overview-dark.webp"><img src="assets/readme/overview-dark.webp" alt="Overview (dark theme)" width="820" /></a>
+
+**Usage and resets**
+
+<a href="assets/readme/usage-dark.webp"><img src="assets/readme/usage-dark.webp" alt="Usage and resets (dark theme)" width="820" /></a>
+
+**Extension popup**
+
+<a href="assets/readme/popup-dark.webp"><img src="assets/readme/popup-dark.webp" alt="Extension popup (dark theme)" width="355" /></a>
+
+</details>
 
 ## Privacy and limitations
 

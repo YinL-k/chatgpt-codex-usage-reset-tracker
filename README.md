@@ -75,20 +75,49 @@
 <img src="https://raw.githubusercontent.com/YinL-k/chatgpt-codex-usage-reset-tracker/main/store-assets/en/preview/large-promotional.jpg?v=20261119" alt="SakuraMeter product preview" width="820" />
 </div>
 
-<details>
-<summary><strong>展开查看 6 张界面截图（深色 / 浅色）</strong></summary>
+以下截图来自 SakuraMeter 3.7.0.12 的实际界面，数字为演示数据。点击任意截图可查看原尺寸。
 
-| Popup | Popup |
-| :---: | :---: |
-| <img src="store-assets/en/preview/01-popup-dark.jpg" alt="Popup dark theme" width="390" /> | <img src="store-assets/en/preview/02-popup-light.jpg" alt="Popup light theme" width="390" /> |
-| Overview | Overview |
-| <img src="store-assets/en/preview/03-overview-dark.jpg" alt="Overview dark theme" width="390" /> | <img src="store-assets/en/preview/04-overview-light.jpg" alt="Overview light theme" width="390" /> |
-| Activity | Activity |
-| <img src="store-assets/en/preview/05-activity-dark.jpg" alt="Activity dark theme" width="390" /> | <img src="store-assets/en/preview/06-activity-light.jpg" alt="Activity light theme" width="390" /> |
+**活动统计**
+
+<a href="assets/readme/activity-light.webp"><img src="assets/readme/activity-light.webp" alt="活动统计（浅色）" width="820" /></a>
+
+<details>
+<summary><strong>更多浅色界面</strong></summary>
+
+**总览**
+
+<a href="assets/readme/overview-light.webp"><img src="assets/readme/overview-light.webp" alt="总览（浅色）" width="820" /></a>
+
+**额度与重置**
+
+<a href="assets/readme/usage-light.webp"><img src="assets/readme/usage-light.webp" alt="额度与重置（浅色）" width="820" /></a>
+
+**扩展弹窗**
+
+<a href="assets/readme/popup-light.webp"><img src="assets/readme/popup-light.webp" alt="扩展弹窗（浅色）" width="355" /></a>
 
 </details>
 
-截图可能滞后于最新版本，功能以对应 Release 和扩展实际页面为准。
+<details>
+<summary><strong>查看深色界面</strong></summary>
+
+**活动统计**
+
+<a href="assets/readme/activity-dark.webp"><img src="assets/readme/activity-dark.webp" alt="活动统计（深色）" width="820" /></a>
+
+**总览**
+
+<a href="assets/readme/overview-dark.webp"><img src="assets/readme/overview-dark.webp" alt="总览（深色）" width="820" /></a>
+
+**额度与重置**
+
+<a href="assets/readme/usage-dark.webp"><img src="assets/readme/usage-dark.webp" alt="额度与重置（深色）" width="820" /></a>
+
+**扩展弹窗**
+
+<a href="assets/readme/popup-dark.webp"><img src="assets/readme/popup-dark.webp" alt="扩展弹窗（深色）" width="355" /></a>
+
+</details>
 
 ## 隐私与使用边界
 
