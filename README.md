@@ -72,7 +72,7 @@
 ## 界面预览
 
 <div align="center">
-<img src="https://raw.githubusercontent.com/YinL-k/chatgpt-codex-usage-reset-tracker/main/store-assets/en/preview/large-promotional.jpg?v=3a031125" alt="SakuraMeter product preview" width="820" />
+<img src="https://raw.githubusercontent.com/YinL-k/chatgpt-codex-usage-reset-tracker/main/store-assets/en/preview/large-promotional.jpg?v=20261119" alt="SakuraMeter product preview" width="820" />
 </div>
 
 <details>
