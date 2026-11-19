@@ -12,6 +12,10 @@
 [![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-Install-4285F4?logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/hnajkeiigdkgafcobbkchpcdafddfpki)
 [![Chrome 116+](https://img.shields.io/badge/Chrome-116%2B-666)](manifest.json)
 
+<div align="center">
+<img src="https://raw.githubusercontent.com/YinL-k/chatgpt-codex-usage-reset-tracker/main/store-assets/en/preview/large-promotional.jpg?v=20261119" alt="SakuraMeter product preview" width="820" />
+</div>
+
 **[从 Chrome Web Store 安装](https://chromewebstore.google.com/detail/hnajkeiigdkgafcobbkchpcdafddfpki)** · **[下载最新版本](https://github.com/YinL-k/chatgpt-codex-usage-reset-tracker/releases/latest)** · **[报告问题 / 建议功能](https://github.com/YinL-k/chatgpt-codex-usage-reset-tracker/issues)**
 
 > **不必频繁打开用量页面。** SakuraMeter 在浏览器中汇总 ChatGPT 活动、Codex 额度窗口与重置时间，并展示实验性的全球 Codex Reset 预测。使用已有的 ChatGPT 登录会话，无需另填 API Key。
@@ -69,11 +73,7 @@
 
 **已有手动安装的用户：** 先备份原扩展目录并导出活动数据，随后在原加载路径替换文件、点击“重新加载”。**不要先卸载**；改用另一加载路径可能生成新扩展 ID，导致原本的本地记录和设置无法自动继承。活动 JSON 导出不包含人工计划或校准值。更多说明见 [中文安装指南](INSTALL-中文.md)。
 
-## 界面预览
-
-<div align="center">
-<img src="https://raw.githubusercontent.com/YinL-k/chatgpt-codex-usage-reset-tracker/main/store-assets/en/preview/large-promotional.jpg?v=20261119" alt="SakuraMeter product preview" width="820" />
-</div>
+## 界面截图
 
 以下截图来自 SakuraMeter 3.7.0.12 的实际界面，数字为演示数据。点击任意截图可查看原尺寸。
 
