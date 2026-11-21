@@ -1,0 +1,56 @@
+name: Core regression
+
+on:
+  pull_request:
+    paths:
+      - 'manifest.json'
+      - 'background.js'
+      - 'content.js'
+      - 'usage-*.js'
+      - 'model-*.js'
+      - 'pro-usage-*.js'
+      - 'reset-*.js'
+      - 'popup.js'
+      - 'dashboard.js'
+      - 'heatmap.js'
+      - 'tests/**'
+      - '.github/workflows/core-regression.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'manifest.json'
+      - 'background.js'
+      - 'content.js'
+      - 'usage-*.js'
+      - 'model-*.js'
+      - 'pro-usage-*.js'
+      - 'reset-*.js'
+      - 'popup.js'
+      - 'dashboard.js'
+      - 'heatmap.js'
+      - 'tests/**'
+      - '.github/workflows/core-regression.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  node-regressions:
+    name: Node core regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install test dependencies
+        run: npm install --prefix tests --ignore-scripts --no-package-lock
+      - name: Run Node regression suite
+        run: npm test --prefix tests
+      - name: Validate manifest and runtime syntax
+        run: |
+          node -e "const m=require('./manifest.json'); if(m.manifest_version!==3) process.exit(1)"
+          for file in background.js content.js usage-core.js popup.js dashboard.js heatmap.js; do
+            node --check "$file"
+          done
